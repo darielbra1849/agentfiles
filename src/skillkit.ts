@@ -6,13 +6,29 @@ import { homedir } from "os";
 const HOME = homedir();
 const DB_PATH = join(HOME, ".skillkit", "analytics.db");
 
+function buildPath(): string {
+	const extra = [
+		"/usr/local/bin",
+		"/opt/homebrew/bin",
+		join(HOME, ".local", "bin"),
+		join(HOME, ".bun", "bin"),
+	];
+	const nvmDir = join(HOME, ".nvm", "versions", "node");
+	try {
+		for (const d of readdirSync(nvmDir)) {
+			extra.push(join(nvmDir, d, "bin"));
+		}
+	} catch {}
+	return [...extra, process.env.PATH || ""].join(":");
+}
+
 function findSkillkitBin(): string | null {
-	const direct = [
+	const searchPaths = [
 		"/usr/local/bin/skillkit",
 		"/opt/homebrew/bin/skillkit",
 		join(HOME, ".local", "bin", "skillkit"),
 	];
-	for (const p of direct) {
+	for (const p of searchPaths) {
 		if (existsSync(p)) return p;
 	}
 	const nvmDir = join(HOME, ".nvm", "versions", "node");
@@ -50,7 +66,7 @@ export function runSkillkitJson(cmd: string): unknown | null {
 		const out = execSync(`${bin} ${cmd} --json`, {
 			encoding: "utf-8",
 			timeout: 15000,
-			env: { ...process.env, NO_COLOR: "1" },
+			env: { ...process.env, NO_COLOR: "1", PATH: buildPath() },
 			stdio: ["pipe", "pipe", "pipe"],
 		}).trim();
 		const jsonStart = out.indexOf("{");
