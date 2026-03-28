@@ -123,6 +123,16 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 				type: "skill",
 				pattern: "directory-with-skillmd",
 			},
+			{
+				baseDir: join(HOME, ".codex", "prompts"),
+				type: "command",
+				pattern: "flat-md",
+			},
+			{
+				baseDir: join(HOME, ".codex", "memories"),
+				type: "memory",
+				pattern: "flat-md",
+			},
 		],
 		agentPaths: [
 			{
