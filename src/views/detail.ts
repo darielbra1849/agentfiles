@@ -95,8 +95,7 @@ export class DetailPanel {
 			const tool = TOOL_CONFIGS.find((t) => t.id === toolId);
 			if (!tool) continue;
 			const badge = left.createSpan("as-tool-name-badge");
-			badge.style.borderColor = tool.color;
-			badge.style.color = tool.color;
+			badge.setCssProps({ "--tool-color": tool.color });
 			if (TOOL_SVGS[toolId]) {
 				renderToolIcon(badge, toolId, 12);
 			}
@@ -181,7 +180,7 @@ export class DetailPanel {
 			prop.createSpan({ cls: "as-fm-key", text: key });
 
 			const valStr =
-				typeof value === "object" ? JSON.stringify(value) : String(value);
+				(typeof value === "object" || Array.isArray(value)) ? JSON.stringify(value) : String(value as string | number | boolean);
 
 			if (valStr.length > 200) {
 				prop.createDiv({ cls: "as-fm-value-long", text: valStr });

@@ -7,6 +7,10 @@
 	height: 100%;
 }
 
+.as-hidden {
+	display: none !important;
+}
+
 .as-container {
 	display: grid;
 	grid-template-columns: 200px 280px 1fr;
@@ -222,6 +226,11 @@
 	width: 8px;
 	height: 8px;
 	border-radius: 50%;
+	background-color: var(--tool-color);
+}
+
+.as-tool-badge {
+	color: var(--tool-color);
 }
 
 .as-tool-svg {
@@ -234,10 +243,11 @@
 	gap: 4px;
 	font-size: var(--font-ui-smaller);
 	padding: 2px 8px;
-	border: 1px solid;
+	border: 1px solid var(--tool-color);
 	border-radius: 10px;
 	font-weight: 500;
 	white-space: nowrap;
+	color: var(--tool-color);
 	flex-shrink: 0;
 }
 
@@ -786,6 +796,7 @@
 
 .as-bar-fill {
 	height: 100%;
+	width: var(--bar-w, 0%);
 	background: var(--interactive-accent);
 	border-radius: var(--radius-s);
 	min-width: 2px;
@@ -871,6 +882,7 @@
 
 .as-budget-fill {
 	height: 100%;
+	width: var(--bar-w, 0%);
 	background: var(--interactive-accent);
 	border-radius: 3px;
 	transition: width 0.3s;
@@ -900,6 +912,7 @@
 
 .as-burn-bar {
 	width: 100%;
+	height: var(--bar-h, 2%);
 	background: var(--interactive-accent);
 	border-radius: 2px 2px 0 0;
 	min-height: 2px;
@@ -954,6 +967,7 @@
 
 .as-ctx-part {
 	height: 100%;
+	width: var(--bar-w, 0%);
 	cursor: default;
 }
 

@@ -14,7 +14,7 @@ export class AgentfilesSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		new Setting(containerEl).setName("Agentfiles").setHeading();
+		new Setting(containerEl).setName("General").setHeading();
 
 		new Setting(containerEl)
 			.setName("File watching")
@@ -47,7 +47,7 @@ export class AgentfilesSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setName("Project scanning").setHeading();
 
 		new Setting(containerEl)
-			.setName("Enable project scanning")
+			.setName("Scan projects")
 			.setDesc(
 				"Scan all directories under the projects home folder for project-level skills"
 			)

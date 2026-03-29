@@ -73,7 +73,7 @@ export class DashboardPanel {
 		}
 
 		const loading = this.containerEl.createDiv("as-dash-loading");
-		const spinner = loading.createDiv("as-dash-spinner");
+		loading.createDiv("as-dash-spinner");
 		loading.createDiv({ cls: "as-dash-loading-text", text: "Loading analytics..." });
 
 		setTimeout(() => {
@@ -143,7 +143,7 @@ export class DashboardPanel {
 			row.createSpan({ cls: "as-bar-name", text: skill.name });
 			const barWrap = row.createDiv("as-bar-wrap");
 			const bar = barWrap.createDiv("as-bar-fill");
-			bar.style.width = `${(skill.total / maxUses) * 100}%`;
+			bar.setCssProps({ "--bar-w": `${(skill.total / maxUses) * 100}%` });
 			row.createSpan({ cls: "as-bar-count", text: String(skill.total) });
 		}
 	}
@@ -158,7 +158,7 @@ export class DashboardPanel {
 		const row = section.createDiv("as-dash-health-row");
 
 		const donut = row.createDiv("as-donut");
-		donut.style.setProperty("--pct", `${usedPct}`);
+		donut.setCssProps({ "--pct": `${usedPct}` });
 		donut.createDiv({ cls: "as-donut-label", text: `${usedPct}%` });
 		donut.createDiv({ cls: "as-donut-sub", text: "active" });
 
@@ -168,7 +168,7 @@ export class DashboardPanel {
 
 		const budgetBar = details.createDiv("as-budget-bar");
 		const fill = budgetBar.createDiv("as-budget-fill");
-		fill.style.width = `${health.metadata.pct}%`;
+		fill.setCssProps({ "--bar-w": `${health.metadata.pct}%` });
 		if (health.metadata.pct > 80) fill.addClass("as-budget-over");
 		details.createDiv({ cls: "as-health-line", text: `Metadata budget: ${health.metadata.pct}%` });
 	}
@@ -205,7 +205,7 @@ export class DashboardPanel {
 			const col = chart.createDiv("as-burn-col");
 			const bar = col.createDiv("as-burn-bar");
 			const height = Math.max(2, (day.costUsd / maxCost) * 100);
-			bar.style.height = `${height}%`;
+			bar.setCssProps({ "--bar-h": `${height}%` });
 			bar.title = `${day.date}: $${day.costUsd.toFixed(0)}`;
 			col.createDiv({ cls: "as-burn-date", text: day.date.slice(8) });
 		}
@@ -225,7 +225,7 @@ export class DashboardPanel {
 		const bar = section.createDiv("as-ctx-bar");
 		for (const seg of segments) {
 			const part = bar.createDiv(`as-ctx-part ${seg.cls}`);
-			part.style.width = `${(seg.tokens / total) * 100}%`;
+			part.setCssProps({ "--bar-w": `${(seg.tokens / total) * 100}%` });
 			part.title = `${seg.label}: ${(seg.tokens / 1000).toFixed(1)}k tokens`;
 		}
 

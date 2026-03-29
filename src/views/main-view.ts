@@ -58,8 +58,7 @@ export class AgentfilesView extends ItemView {
 		this.sidebarEl = container.createDiv("as-panel as-panel-sidebar");
 		this.listEl = container.createDiv("as-panel as-panel-list");
 		this.detailEl = container.createDiv("as-panel as-panel-detail");
-		this.dashboardEl = container.createDiv("as-panel as-panel-dashboard");
-		this.dashboardEl.style.display = "none";
+		this.dashboardEl = container.createDiv("as-panel as-panel-dashboard as-hidden");
 
 		this.sidebarPanel = new SidebarPanel(this.sidebarEl, this.store, () =>
 			this.toggleDashboard()
@@ -83,14 +82,14 @@ export class AgentfilesView extends ItemView {
 	toggleDashboard(): void {
 		this.isDashboard = !this.isDashboard;
 		if (this.isDashboard) {
-			this.listEl.style.display = "none";
-			this.detailEl.style.display = "none";
-			this.dashboardEl.style.display = "block";
+			this.listEl.addClass("as-hidden");
+			this.detailEl.addClass("as-hidden");
+			this.dashboardEl.removeClass("as-hidden");
 			this.dashboardPanel.render();
 		} else {
-			this.listEl.style.display = "";
-			this.detailEl.style.display = "";
-			this.dashboardEl.style.display = "none";
+			this.listEl.removeClass("as-hidden");
+			this.detailEl.removeClass("as-hidden");
+			this.dashboardEl.addClass("as-hidden");
 		}
 		this.sidebarPanel.setDashboardActive(this.isDashboard);
 		this.sidebarPanel.render();

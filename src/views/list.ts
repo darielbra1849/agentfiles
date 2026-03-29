@@ -102,11 +102,10 @@ export class ListPanel {
 			const badge = meta.createSpan("as-tool-badge");
 			badge.title = tool.name;
 			badge.setAttribute("aria-label", tool.name);
+			badge.setCssProps({ "--tool-color": tool.color });
 			if (TOOL_SVGS[toolId]) {
-				badge.style.color = tool.color;
 				renderToolIcon(badge, toolId, 12);
 			} else {
-				badge.style.backgroundColor = tool.color;
 				badge.addClass("as-tool-badge-dot");
 			}
 		}

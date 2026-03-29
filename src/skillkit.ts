@@ -78,7 +78,7 @@ export function isSkillkitAvailable(): boolean {
 	return getSkillkitBin() !== null || existsSync(DB_PATH);
 }
 
-export function runSkillkitJson(cmd: string): unknown | null {
+export function runSkillkitJson(cmd: string): Record<string, unknown> | unknown[] | null {
 	const bin = getSkillkitBin();
 	if (!bin) return null;
 	try {

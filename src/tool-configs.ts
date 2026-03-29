@@ -24,7 +24,6 @@ function cliExists(name: string): boolean {
 	}
 	const nvmDir = join(HOME, ".nvm", "versions", "node");
 	try {
-		const { readdirSync } = require("fs");
 		for (const d of readdirSync(nvmDir)) {
 			if (existsSync(join(nvmDir, d, "bin", name))) return true;
 		}
