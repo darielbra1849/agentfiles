@@ -9,6 +9,8 @@ export class ListPanel {
 	private store: SkillStore;
 	private onSelect: (item: SkillItem) => void;
 	private selectedId: string | null = null;
+	private inputEl: HTMLInputElement | null = null;
+	private listEl: HTMLElement | null = null;
 
 	constructor(
 		containerEl: HTMLElement,
@@ -25,25 +27,35 @@ export class ListPanel {
 	}
 
 	render(): void {
-		this.containerEl.empty();
-		this.containerEl.addClass("as-list");
+		if (!this.inputEl) {
+			this.containerEl.empty();
+			this.containerEl.addClass("as-list");
 
-		const searchContainer = this.containerEl.createDiv("as-search");
-		const input = searchContainer.createEl("input", {
-			type: "text",
-			placeholder: "Search skills...",
-			cls: "as-search-input",
-		});
-		input.value = this.store.searchQuery;
-		input.addEventListener("input", () => {
-			this.store.setSearch(input.value);
-		});
+			const searchContainer = this.containerEl.createDiv("as-search");
+			this.inputEl = searchContainer.createEl("input", {
+				type: "text",
+				placeholder: "Search skills...",
+				cls: "as-search-input",
+			});
+			this.inputEl.addEventListener("input", () => {
+				this.store.setSearch(this.inputEl!.value);
+			});
 
-		const listContainer = this.containerEl.createDiv("as-list-items");
+			this.listEl = this.containerEl.createDiv("as-list-items");
+		}
+
+		this.inputEl.value = this.store.searchQuery;
+		this.renderList();
+	}
+
+	private renderList(): void {
+		if (!this.listEl) return;
+		this.listEl.empty();
+
 		const items = this.store.filteredItems;
 
 		if (items.length === 0) {
-			listContainer.createDiv({
+			this.listEl.createDiv({
 				cls: "as-list-empty",
 				text: "No skills found",
 			});
@@ -51,7 +63,7 @@ export class ListPanel {
 		}
 
 		for (const item of items) {
-			this.renderCard(listContainer, item);
+			this.renderCard(this.listEl, item);
 		}
 	}
 
