@@ -262,7 +262,28 @@ export class DashboardPanel {
 	private renderStale(health: HealthJson): void {
 		if (health.usage.never_used.length === 0) return;
 		const section = this.containerEl.createDiv("as-dash-section");
-		section.createDiv({ cls: "as-dash-title", text: `Stale Skills (${health.usage.unused_30d})` });
+
+		const titleRow = section.createDiv("as-dash-title-row");
+		titleRow.createDiv({ cls: "as-dash-title", text: `Stale skills (${health.usage.unused_30d})` });
+
+		const pruneBtn = titleRow.createEl("button", { cls: "as-action-btn as-action-btn-danger", text: "Prune all" });
+		pruneBtn.addEventListener("click", () => {
+			const confirmed = confirm(`Remove ${health.usage.unused_30d} unused skills? This cannot be undone.`);
+			if (!confirmed) return;
+			pruneBtn.setText("Pruning...");
+			pruneBtn.disabled = true;
+			setTimeout(() => {
+				const result = runSkillkitAction("prune --yes");
+				if (result.success) {
+					new Notice(`Pruned stale skills`);
+					this.render();
+				} else {
+					new Notice(`Prune failed: ${result.output}`);
+				}
+				pruneBtn.setText("Prune all");
+				pruneBtn.disabled = false;
+			}, 10);
+		});
 
 		const list = section.createDiv("as-stale-list");
 		for (const name of health.usage.never_used.slice(0, 20)) {
@@ -276,9 +297,5 @@ export class DashboardPanel {
 				text: `+${health.usage.never_used.length - 20} more`,
 			});
 		}
-
-		const hint = section.createDiv("as-stale-hint");
-		hint.createEl("code", { text: "skillkit prune" });
-		hint.createSpan({ text: " to remove unused skills" });
 	}
 }

@@ -135,6 +135,26 @@ export class DetailPanel {
 			shell.showItemInFolder(item.filePath);
 		});
 
+		if (isSkillkitAvailable()) {
+			const deleteBtn = right.createEl("button", {
+				cls: "as-toolbar-btn as-toolbar-btn-danger",
+				attr: { "aria-label": "Remove skill" },
+			});
+			setIcon(deleteBtn, "trash-2");
+			deleteBtn.addEventListener("click", () => {
+				const confirmed = confirm(`Remove "${item.name}"? This will delete the skill files.`);
+				if (!confirmed) return;
+				const result = runSkillkitAction(`prune --skill ${item.name} --yes`);
+				if (result.success) {
+					new Notice(`Removed ${item.name}`);
+					this.store.refresh(this.settings);
+					this.clear();
+				} else {
+					new Notice(`Failed to remove: ${result.output}`);
+				}
+			});
+		}
+
 		const meta = toolbar.createDiv("as-detail-meta-bar");
 		const tokens = estimateTokens(item.content);
 		const chars = item.content.length;
@@ -198,9 +218,6 @@ export class DetailPanel {
 		this.renderUsageSection(body, item);
 		this.renderConflicts(body, item);
 		this.renderTraces(body, item);
-		if (item.usage?.isStale && isSkillkitAvailable()) {
-			this.renderPruneAction(body, item);
-		}
 		const previewEl = body.createDiv("as-detail-preview markdown-rendered");
 		void MarkdownRenderer.render(
 			this.app,
