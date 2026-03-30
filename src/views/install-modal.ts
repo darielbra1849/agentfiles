@@ -1,4 +1,7 @@
 import { Modal, Notice, Setting, type App } from "obsidian";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { join } from "path";
+import { homedir } from "os";
 import { installSkillAsync, VALID_AGENTS, TOOL_TO_AGENT, type MarketplaceSkill } from "../marketplace";
 import { getInstalledTools } from "../scanner";
 import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
@@ -9,8 +12,31 @@ for (const [toolId, agentId] of Object.entries(TOOL_TO_AGENT)) {
 	if (!AGENT_TO_TOOL[agentId]) AGENT_TO_TOOL[agentId] = toolId;
 }
 
+const PREFS_FILE = join(homedir(), ".skillkit", "install-prefs.json");
+
 let lastSelectedAgents: Set<string> | null = null;
 let lastIsGlobal = true;
+
+function loadPrefs(): void {
+	if (lastSelectedAgents) return;
+	if (!existsSync(PREFS_FILE)) return;
+	try {
+		const data = JSON.parse(readFileSync(PREFS_FILE, "utf-8"));
+		lastSelectedAgents = new Set(data.agents || []);
+		lastIsGlobal = data.global ?? true;
+	} catch { /* empty */ }
+}
+
+function savePrefs(): void {
+	try {
+		writeFileSync(PREFS_FILE, JSON.stringify({
+			agents: lastSelectedAgents ? [...lastSelectedAgents] : [],
+			global: lastIsGlobal,
+		}), "utf-8");
+	} catch { /* empty */ }
+}
+
+loadPrefs();
 
 export class InstallSkillModal extends Modal {
 	private skill: MarketplaceSkill;
@@ -116,6 +142,7 @@ export class InstallSkillModal extends Modal {
 
 		lastSelectedAgents = new Set(this.selectedAgents);
 		lastIsGlobal = this.isGlobal;
+		savePrefs();
 
 		this.close();
 		new Notice(`Installing ${this.skill.name}...`, 3000);
