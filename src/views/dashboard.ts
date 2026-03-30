@@ -1,6 +1,7 @@
 import { Notice, setIcon, type App } from "obsidian";
 import { shell } from "electron";
 import { isSkillkitAvailable, runSkillkitJson, runSkillkitAction } from "../skillkit";
+import { updateAllSkills } from "../marketplace";
 import { showConfirmModal } from "./confirm-modal";
 
 interface StatsJson {
@@ -183,6 +184,26 @@ export class DashboardPanel {
 			const label = ago < 5 ? "just now" : ago < 60 ? `${ago}s ago` : `${Math.round(ago / 60)}m ago`;
 			titleRow.createSpan({ cls: "as-dash-updated", text: `Updated ${label}` });
 		}
+		const updateBtn = titleRow.createEl("button", { cls: "as-action-btn", text: "Update skills" });
+		updateBtn.addEventListener("click", () => {
+			updateBtn.setText("Updating...");
+			updateBtn.disabled = true;
+			setTimeout(() => {
+				const result = updateAllSkills();
+				if (result.success) {
+					const msg = result.count > 0 ? `Updated ${result.count} skill(s)` : "All skills up to date";
+					new Notice(msg, 5000);
+					cachedData = null;
+					cachedAt = null;
+					this.render();
+				} else {
+					new Notice(`Update failed: ${result.output}`, 5000);
+				}
+				updateBtn.setText("Update skills");
+				updateBtn.disabled = false;
+			}, 10);
+		});
+
 		const scanBtn = titleRow.createEl("button", { cls: "as-action-btn", text: "Scan sessions" });
 		scanBtn.addEventListener("click", () => {
 			scanBtn.setText("Scanning...");

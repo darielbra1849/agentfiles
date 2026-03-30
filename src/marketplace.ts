@@ -293,6 +293,31 @@ export function removeSkill(skillName: string, runner: "auto" | "npx" | "bunx" =
 	return { success: true, output: cliSuccess ? output : `Cleaned up copies of ${skillName}` };
 }
 
+export function updateAllSkills(runner: "auto" | "npx" | "bunx" = "auto"): { success: boolean; output: string; count: number } {
+	const resolvedRunner = getRunner(runner);
+	const cmd = `${resolvedRunner} skills update`;
+	try {
+		const out = execSync(cmd, {
+			encoding: "utf-8",
+			timeout: 120000,
+			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
+			stdio: ["pipe", "pipe", "ignore"],
+		}).trim();
+		const match = out.match(/Updated (\d+) skill/);
+		const count = match ? parseInt(match[1]) : 0;
+		return { success: true, output: out, count };
+	} catch (e: unknown) {
+		if (e && typeof e === "object" && "stdout" in e) {
+			const stdout = String((e as { stdout: string | Buffer }).stdout ?? "");
+			if (stdout.includes("Updated") || stdout.includes("already up to date")) {
+				const match = stdout.match(/Updated (\d+) skill/);
+				return { success: true, output: stdout, count: match ? parseInt(match[1]) : 0 };
+			}
+		}
+		return { success: false, output: e instanceof Error ? e.message : "Update failed", count: 0 };
+	}
+}
+
 export function formatInstalls(n: number): string {
 	if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
 	if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
