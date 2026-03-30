@@ -9,12 +9,15 @@ for (const [toolId, agentId] of Object.entries(TOOL_TO_AGENT)) {
 	if (!AGENT_TO_TOOL[agentId]) AGENT_TO_TOOL[agentId] = toolId;
 }
 
+let lastSelectedAgents: Set<string> | null = null;
+let lastIsGlobal = true;
+
 export class InstallSkillModal extends Modal {
 	private skill: MarketplaceSkill;
 	private settings: ChopsSettings;
 	private onInstalled: () => void;
-	private selectedAgents = new Set<string>();
-	private isGlobal = true;
+	private selectedAgents: Set<string>;
+	private isGlobal: boolean;
 
 	constructor(app: App, skill: MarketplaceSkill, settings: ChopsSettings, onInstalled: () => void) {
 		super(app);
@@ -22,11 +25,17 @@ export class InstallSkillModal extends Modal {
 		this.settings = settings;
 		this.onInstalled = onInstalled;
 
-		const installed = getInstalledTools();
-		for (const toolId of installed) {
-			const agentName = TOOL_TO_AGENT[toolId];
-			if (agentName) this.selectedAgents.add(agentName);
+		if (lastSelectedAgents) {
+			this.selectedAgents = new Set(lastSelectedAgents);
+		} else {
+			this.selectedAgents = new Set<string>();
+			const installed = getInstalledTools();
+			for (const toolId of installed) {
+				const agentName = TOOL_TO_AGENT[toolId];
+				if (agentName) this.selectedAgents.add(agentName);
+			}
 		}
+		this.isGlobal = lastIsGlobal;
 	}
 
 	onOpen(): void {
@@ -50,6 +59,8 @@ export class InstallSkillModal extends Modal {
 
 		new Setting(contentEl).setName("Agents").setHeading();
 
+		const scrollArea = contentEl.createDiv("as-install-scroll");
+
 		const installed = getInstalledTools();
 		const installedAgentIds = new Set(
 			installed.map((id) => TOOL_TO_AGENT[id]).filter(Boolean)
@@ -58,7 +69,7 @@ export class InstallSkillModal extends Modal {
 		for (const agent of VALID_AGENTS) {
 			const isInstalled = installedAgentIds.has(agent.id);
 			const toolId = AGENT_TO_TOOL[agent.id];
-			const setting = new Setting(contentEl)
+			const setting = new Setting(scrollArea)
 				.addToggle((toggle) =>
 					toggle
 						.setValue(this.selectedAgents.has(agent.id))
@@ -89,16 +100,11 @@ export class InstallSkillModal extends Modal {
 			}
 		}
 
-		new Setting(contentEl)
-			.addButton((btn) =>
-				btn.setButtonText("Cancel").onClick(() => this.close())
-			)
-			.addButton((btn) =>
-				btn
-					.setButtonText("Install")
-					.setCta()
-					.onClick(() => this.doInstall(btn.buttonEl))
-			);
+		const footer = contentEl.createDiv("as-install-footer");
+		const cancelBtn = footer.createEl("button", { text: "Cancel" });
+		cancelBtn.addEventListener("click", () => this.close());
+		const installBtn = footer.createEl("button", { cls: "mod-cta", text: "Install" });
+		installBtn.addEventListener("click", () => this.doInstall(installBtn));
 	}
 
 	private doInstall(btnEl: HTMLButtonElement): void {
@@ -107,6 +113,9 @@ export class InstallSkillModal extends Modal {
 			new Notice("Select at least one agent", 5000);
 			return;
 		}
+
+		lastSelectedAgents = new Set(this.selectedAgents);
+		lastIsGlobal = this.isGlobal;
 
 		btnEl.setText("Installing...");
 		btnEl.disabled = true;

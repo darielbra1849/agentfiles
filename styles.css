@@ -1757,19 +1757,22 @@
 	);
 }
 
-.as-install-modal .modal-content {
-	display: flex;
-	flex-direction: column;
-	max-height: 70vh;
-	overflow: hidden;
+.as-install-modal .setting-item-heading .setting-item-name {
+	padding-left: 0;
 }
 
-.as-install-modal .modal-content > .setting-item:last-child {
-	position: sticky;
-	bottom: 0;
-	background: var(--modal-background);
+.as-install-scroll {
+	max-height: 300px;
+	overflow-y: auto;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	margin-bottom: 12px;
+}
+
+.as-install-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	padding-top: 8px;
 	border-top: 1px solid var(--background-modifier-border);
-	padding-top: 12px;
-	margin-top: 8px;
-	z-index: 1;
 }
