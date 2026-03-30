@@ -66,16 +66,27 @@ export class ListPanel {
 
 		this.dropdownEl = anchor.createDiv("as-filter-dropdown");
 
-		const types = ["all", "skill", "command", "agent", "rule"];
-		for (const type of types) {
+		const filters: { id: string; label: string; cls: string }[] = [
+			{ id: "all", label: "All", cls: "" },
+			{ id: "stale", label: "Stale", cls: "as-badge-stale" },
+			{ id: "heavy", label: "Heavy", cls: "as-badge-heavy" },
+			{ id: "oversized", label: "Oversized", cls: "as-badge-warn" },
+			{ id: "conflict", label: "Conflict", cls: "as-badge-conflict" },
+		];
+
+		for (const f of filters) {
 			const item = this.dropdownEl.createDiv("as-filter-option");
-			if ((type === "all" && !this.typeFilter) || type === this.typeFilter) {
+			if ((f.id === "all" && !this.typeFilter) || f.id === this.typeFilter) {
 				item.addClass("is-active");
 			}
-			item.setText(type === "all" ? "All types" : type);
+			if (f.cls) {
+				const badge = item.createSpan({ cls: f.cls, text: f.label });
+			} else {
+				item.setText(f.label);
+			}
 			item.addEventListener("click", (e) => {
 				e.stopPropagation();
-				this.typeFilter = type === "all" ? null : type;
+				this.typeFilter = f.id === "all" ? null : f.id;
 				if (this.dropdownEl) {
 					this.dropdownEl.remove();
 					this.dropdownEl = null;
@@ -100,7 +111,20 @@ export class ListPanel {
 
 		let items = this.store.filteredItems;
 		if (this.typeFilter) {
-			items = items.filter((i) => i.type === this.typeFilter);
+			switch (this.typeFilter) {
+				case "stale":
+					items = items.filter((i) => i.usage?.isStale);
+					break;
+				case "heavy":
+					items = items.filter((i) => i.usage?.isHeavy);
+					break;
+				case "oversized":
+					items = items.filter((i) => i.warnings?.oversized);
+					break;
+				case "conflict":
+					items = items.filter((i) => i.conflicts && i.conflicts.length > 0);
+					break;
+			}
 		}
 
 		if (items.length === 0) {
