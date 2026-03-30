@@ -55,9 +55,18 @@ export async function fetchSkillContent(source: string, skillName: string, skill
 		const idParts = skillId.split("/");
 		const folderName = idParts[idParts.length - 1] || skillName;
 
+		const sourceParts = source.split("/");
+		const orgName = sourceParts[0] || "";
+		const candidates = new Set([folderName, skillName]);
+		if (skillName.startsWith(orgName + "-")) candidates.add(skillName.slice(orgName.length + 1));
+		if (folderName.startsWith(orgName + "-")) candidates.add(folderName.slice(orgName.length + 1));
+		for (const part of sourceParts) {
+			if (skillName.startsWith(part + "-")) candidates.add(skillName.slice(part.length + 1));
+		}
+
 		const match = skillMdFiles.find((p) => {
-			const dir = p.replace("/SKILL.md", "").split("/").pop();
-			return dir === folderName || dir === skillName;
+			const dir = p.replace("/SKILL.md", "").split("/").pop() || "";
+			return candidates.has(dir);
 		});
 
 		if (match) {
