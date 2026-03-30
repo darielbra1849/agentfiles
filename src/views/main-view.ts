@@ -82,7 +82,7 @@ export class AgentfilesView extends ItemView {
 			this
 		);
 		this.dashboardPanel = new DashboardPanel(this.dashboardEl, this.app);
-		this.marketplacePanel = new MarketplacePanel(this.marketplaceEl, this);
+		this.marketplacePanel = new MarketplacePanel(this.marketplaceEl, this, this.settings);
 
 		this.updateRef = this.store.on("updated", () => this.renderAll());
 		this.renderAll();

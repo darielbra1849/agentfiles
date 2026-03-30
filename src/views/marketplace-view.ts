@@ -2,6 +2,7 @@ import { MarkdownRenderer, Notice, setIcon } from "obsidian";
 import { searchSkills, fetchSkillContent, installSkill, formatInstalls, getPopularSkills, type MarketplaceSkill } from "../marketplace";
 import { TOOL_CONFIGS } from "../tool-configs";
 import { getInstalledTools } from "../scanner";
+import type { ChopsSettings } from "../types";
 
 export class MarketplacePanel {
 	private containerEl: HTMLElement;
@@ -11,10 +12,12 @@ export class MarketplacePanel {
 	private selectedSkill: MarketplaceSkill | null = null;
 	private popularCache: MarketplaceSkill[] = [];
 	private app: { app: { workspace: unknown } };
+	private settings: ChopsSettings;
 
-	constructor(containerEl: HTMLElement, app: { app: { workspace: unknown } }) {
+	constructor(containerEl: HTMLElement, app: { app: { workspace: unknown } }, settings: ChopsSettings) {
 		this.containerEl = containerEl;
 		this.app = app;
+		this.settings = settings;
 	}
 
 	render(): void {
@@ -176,7 +179,7 @@ export class MarketplacePanel {
 
 			const agents = agentOptions.map((a) => a.id);
 			setTimeout(() => {
-				const result = installSkill(skill.source, agents);
+				const result = installSkill(skill.source, agents, this.settings.packageRunner);
 				if (result.success) {
 					new Notice(`Installed ${skill.name}`);
 					skill.installed = true;

@@ -75,6 +75,7 @@ export interface ChopsSettings {
 	customScanPaths: string[];
 	projectScanEnabled: boolean;
 	projectsHomeDir: string;
+	packageRunner: "auto" | "npx" | "bunx";
 }
 
 export const DEFAULT_SETTINGS: ChopsSettings = {
@@ -86,4 +87,5 @@ export const DEFAULT_SETTINGS: ChopsSettings = {
 	customScanPaths: [],
 	projectScanEnabled: true,
 	projectsHomeDir: "",
+	packageRunner: "auto",
 };

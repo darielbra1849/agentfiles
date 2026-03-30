@@ -137,7 +137,7 @@ function buildPath(): string {
 	return [...extra, process.env.PATH || ""].join(":");
 }
 
-function getRunner(): string {
+function detectRunner(): string {
 	const bunPath = join(HOME, ".bun", "bin", "bunx");
 	if (existsSync(bunPath)) return bunPath;
 	if (existsSync("/usr/local/bin/bunx")) return "bunx";
@@ -145,10 +145,16 @@ function getRunner(): string {
 	return "npx";
 }
 
-export function installSkill(source: string, agents: string[]): { success: boolean; output: string } {
+function getRunner(preference: "auto" | "npx" | "bunx" = "auto"): string {
+	if (preference === "npx") return "npx";
+	if (preference === "bunx") return detectRunner();
+	return detectRunner();
+}
+
+export function installSkill(source: string, agents: string[], runner: "auto" | "npx" | "bunx" = "auto"): { success: boolean; output: string } {
 	const agentFlag = agents.length > 0 ? `-a ${agents.join(" ")}` : "-a '*'";
-	const runner = getRunner();
-	const cmd = `${runner} skills add ${source} ${agentFlag} -y`;
+	const resolvedRunner = getRunner(runner);
+	const cmd = `${resolvedRunner} skills add ${source} ${agentFlag} -y`;
 	try {
 		const out = execSync(cmd, {
 			encoding: "utf-8",
