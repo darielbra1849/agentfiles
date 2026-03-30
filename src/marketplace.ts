@@ -205,7 +205,7 @@ export function installSkill(
 		return { success: true, output: out };
 	} catch (e: unknown) {
 		if (e && typeof e === "object" && "stdout" in e) {
-			const stdout = String((e as { stdout: unknown }).stdout || "");
+			const stdout = String((e as { stdout: string | Buffer }).stdout ?? "");
 			if (stdout.includes("Done") || stdout.includes("Installed")) {
 				return { success: true, output: stdout };
 			}
@@ -241,7 +241,7 @@ export function removeSkill(skillName: string, runner: "auto" | "npx" | "bunx" =
 		return { success: true, output: out };
 	} catch (e: unknown) {
 		if (e && typeof e === "object" && "stdout" in e) {
-			const stdout = String((e as { stdout: unknown }).stdout || "");
+			const stdout = String((e as { stdout: string | Buffer }).stdout ?? "");
 			if (stdout.includes("Removed") || stdout.includes("Done")) {
 				return { success: true, output: stdout };
 			}
