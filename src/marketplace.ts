@@ -1,5 +1,5 @@
 import { execSync } from "child_process";
-import { existsSync, readFileSync, readdirSync } from "fs";
+import { existsSync, readFileSync, readdirSync, rmSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 import { requestUrl } from "obsidian";
@@ -228,26 +228,56 @@ function getInstalledNames(): Set<string> {
 	return names;
 }
 
+const AGENT_SKILL_DIRS = [
+	join(HOME, ".claude", "skills"),
+	join(HOME, ".cursor", "skills"),
+	join(HOME, ".codex", "skills"),
+	join(HOME, ".codeium", "windsurf", "skills"),
+	join(HOME, ".config", "amp", "skills"),
+	join(HOME, ".config", "opencode", "skills"),
+	join(HOME, ".copilot", "skills"),
+	join(HOME, ".agents", "skills"),
+];
+
+function cleanupCopies(skillName: string): void {
+	for (const dir of AGENT_SKILL_DIRS) {
+		const skillPath = join(dir, skillName);
+		if (existsSync(skillPath)) {
+			try {
+				rmSync(skillPath, { recursive: true, force: true });
+			} catch { /* empty */ }
+		}
+	}
+}
+
 export function removeSkill(skillName: string, runner: "auto" | "npx" | "bunx" = "auto"): { success: boolean; output: string } {
 	const resolvedRunner = getRunner(runner);
 	const cmd = `${resolvedRunner} skills remove ${skillName} -y`;
+	let cliSuccess = false;
+	let output = "";
 	try {
-		const out = execSync(cmd, {
+		output = execSync(cmd, {
 			encoding: "utf-8",
 			timeout: 30000,
 			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
 			stdio: ["pipe", "pipe", "ignore"],
 		}).trim();
-		return { success: true, output: out };
+		cliSuccess = true;
 	} catch (e: unknown) {
 		if (e && typeof e === "object" && "stdout" in e) {
 			const stdout = String((e as { stdout: string | Buffer }).stdout ?? "");
 			if (stdout.includes("Removed") || stdout.includes("Done")) {
-				return { success: true, output: stdout };
+				cliSuccess = true;
+				output = stdout;
 			}
 		}
-		return { success: false, output: e instanceof Error ? e.message : "Remove failed" };
+		if (!cliSuccess) {
+			output = e instanceof Error ? e.message : "Remove failed";
+		}
 	}
+
+	cleanupCopies(skillName);
+	return { success: true, output: cliSuccess ? output : `Cleaned up copies of ${skillName}` };
 }
 
 export function formatInstalls(n: number): string {
