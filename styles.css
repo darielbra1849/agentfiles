@@ -1576,8 +1576,6 @@
 }
 
 .as-dash-updated {
-	font-size: var(--font-smallest);
+	font-size: 10px;
 	color: var(--text-faint);
-	text-align: right;
-	margin-bottom: 4px;
 }

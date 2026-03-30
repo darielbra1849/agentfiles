@@ -108,12 +108,6 @@ export class DashboardPanel {
 	}
 
 	private renderDashboard(data: DashboardData): void {
-		if (cachedAt) {
-			const ago = Math.round((Date.now() - cachedAt) / 1000);
-			const label = ago < 5 ? "just now" : ago < 60 ? `${ago}s ago` : `${Math.round(ago / 60)}m ago`;
-			this.containerEl.createDiv({ cls: "as-dash-updated", text: `Updated ${label}` });
-		}
-
 		if (data.stats) this.renderOverview(data.stats, data.health);
 		if (data.stats) this.renderTopSkills(data.stats);
 		if (data.health || data.context) {
@@ -148,6 +142,11 @@ export class DashboardPanel {
 		const section = this.containerEl.createDiv("as-dash-section");
 		const titleRow = section.createDiv("as-dash-title-row");
 		titleRow.createDiv({ cls: "as-dash-title", text: "Overview" });
+		if (cachedAt) {
+			const ago = Math.round((Date.now() - cachedAt) / 1000);
+			const label = ago < 5 ? "just now" : ago < 60 ? `${ago}s ago` : `${Math.round(ago / 60)}m ago`;
+			titleRow.createSpan({ cls: "as-dash-updated", text: `Updated ${label}` });
+		}
 		const scanBtn = titleRow.createEl("button", { cls: "as-action-btn", text: "Scan sessions" });
 		scanBtn.addEventListener("click", () => {
 			scanBtn.setText("Scanning...");
