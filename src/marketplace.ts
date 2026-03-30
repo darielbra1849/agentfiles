@@ -37,59 +37,67 @@ export async function searchSkills(query: string): Promise<MarketplaceSkill[]> {
 	}
 }
 
+const treeCache = new Map<string, { branch: string; files: string[] }>();
+
+async function getRepoTree(source: string): Promise<{ branch: string; files: string[] }> {
+	const cached = treeCache.get(source);
+	if (cached) return cached;
+
+	const repoRes = await requestUrl({ url: `https://api.github.com/repos/${source}` });
+	const branch = repoRes.json.default_branch || "main";
+
+	const treeRes = await requestUrl({
+		url: `https://api.github.com/repos/${source}/git/trees/${branch}?recursive=1`,
+	});
+	const files = (treeRes.json.tree as { path: string }[])
+		.filter((t) => t.path.endsWith("/SKILL.md"))
+		.map((t) => t.path);
+
+	const result = { branch, files };
+	treeCache.set(source, result);
+	return result;
+}
+
+function buildCandidateNames(skillName: string, skillId: string, source: string): Set<string> {
+	const idParts = skillId.split("/");
+	const folderName = idParts[idParts.length - 1] || skillName;
+	const candidates = new Set([folderName, skillName]);
+
+	for (const part of source.split("/")) {
+		if (skillName.startsWith(part + "-")) {
+			candidates.add(skillName.slice(part.length + 1));
+		}
+		for (const sub of part.split("-")) {
+			if (skillName.startsWith(sub + "-")) {
+				candidates.add(skillName.slice(sub.length + 1));
+			}
+		}
+	}
+	return candidates;
+}
+
 export async function fetchSkillContent(source: string, skillName: string, skillId: string): Promise<string | null> {
 	try {
-		const repoRes = await requestUrl({
-			url: `https://api.github.com/repos/${source}`,
-		});
-		const defaultBranch = repoRes.json.default_branch || "main";
+		const { branch, files } = await getRepoTree(source);
+		const candidates = buildCandidateNames(skillName, skillId, source);
 
-		const treeRes = await requestUrl({
-			url: `https://api.github.com/repos/${source}/git/trees/${defaultBranch}?recursive=1`,
-		});
-		const tree = treeRes.json.tree as { path: string }[];
-		const skillMdFiles = tree
-			.filter((t) => t.path.endsWith("/SKILL.md"))
-			.map((t) => t.path);
-
-		const idParts = skillId.split("/");
-		const folderName = idParts[idParts.length - 1] || skillName;
-
-		const sourceParts = source.split("/");
-		const orgName = sourceParts[0] || "";
-		const candidates = new Set([folderName, skillName]);
-		if (skillName.startsWith(orgName + "-")) candidates.add(skillName.slice(orgName.length + 1));
-		if (folderName.startsWith(orgName + "-")) candidates.add(folderName.slice(orgName.length + 1));
-		for (const part of sourceParts) {
-			if (skillName.startsWith(part + "-")) candidates.add(skillName.slice(part.length + 1));
-		}
-
-		const match = skillMdFiles.find((p) => {
+		let match = files.find((p) => {
 			const dir = p.replace("/SKILL.md", "").split("/").pop() || "";
 			return candidates.has(dir);
 		});
 
-		if (match) {
-			const contentRes = await requestUrl({
-				url: `https://raw.githubusercontent.com/${source}/${defaultBranch}/${match}`,
+		if (!match) {
+			match = files.find((p) => {
+				const dir = p.replace("/SKILL.md", "").split("/").pop() || "";
+				return skillName.includes(dir) || dir.includes(skillName);
 			});
-			return contentRes.text;
 		}
 
-		const fallbacks = [
-			`skills/${skillName}/SKILL.md`,
-			`${skillName}/SKILL.md`,
-			`SKILL.md`,
-		];
-		for (const path of fallbacks) {
-			try {
-				const contentRes = await requestUrl({
-					url: `https://raw.githubusercontent.com/${source}/${defaultBranch}/${path}`,
-				});
-				return contentRes.text;
-			} catch { /* empty */ }
-		}
-		return null;
+		const path = match || `skills/${skillName}/SKILL.md`;
+		const contentRes = await requestUrl({
+			url: `https://raw.githubusercontent.com/${source}/${branch}/${path}`,
+		});
+		return contentRes.text;
 	} catch { /* empty */
 		return null;
 	}
