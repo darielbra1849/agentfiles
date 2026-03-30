@@ -57,11 +57,35 @@ function loadData(): DashboardData {
 	};
 }
 
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { join } from "path";
+import { homedir } from "os";
+
+const CACHE_FILE = join(homedir(), ".skillkit", "dashboard-cache.json");
+const CACHE_TTL = 60_000;
+
 let cachedData: DashboardData | null = null;
 let cachedAt: number | null = null;
 let refreshing = false;
 
-const CACHE_TTL = 60_000;
+function loadDiskCache(): void {
+	if (cachedData) return;
+	if (!existsSync(CACHE_FILE)) return;
+	try {
+		const raw = JSON.parse(readFileSync(CACHE_FILE, "utf-8"));
+		cachedData = raw.data;
+		cachedAt = raw.cachedAt;
+	} catch { /* empty */ }
+}
+
+function saveDiskCache(): void {
+	if (!cachedData) return;
+	try {
+		writeFileSync(CACHE_FILE, JSON.stringify({ data: cachedData, cachedAt }, null, 2), "utf-8");
+	} catch { /* empty */ }
+}
+
+loadDiskCache();
 
 export class DashboardPanel {
 	private containerEl: HTMLElement;
@@ -96,6 +120,7 @@ export class DashboardPanel {
 				const data = loadData();
 				cachedData = data;
 				cachedAt = Date.now();
+				saveDiskCache();
 				loading.remove();
 				this.renderDashboard(data);
 			}, 10);
@@ -108,6 +133,7 @@ export class DashboardPanel {
 			const data = loadData();
 			cachedData = data;
 			cachedAt = Date.now();
+			saveDiskCache();
 			refreshing = false;
 			if (this.containerEl.hasClass("as-dashboard")) {
 				this.containerEl.empty();
