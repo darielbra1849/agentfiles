@@ -145,6 +145,7 @@ export class DashboardPanel {
 	}
 
 	private renderDashboard(data: DashboardData): void {
+		this.renderActionBar(data);
 		if (data.stats) this.renderOverview(data.stats, data.health);
 		if (data.stats) this.renderTopSkills(data.stats);
 		if (data.health || data.context) {
@@ -154,6 +155,80 @@ export class DashboardPanel {
 		}
 		if (data.burn) this.renderBurn(data.burn);
 		if (data.health) this.renderStale(data.health);
+	}
+
+	private renderActionBar(data: DashboardData): void {
+		const bar = this.containerEl.createDiv("as-dash-action-bar");
+
+		if (cachedAt) {
+			const ago = Math.round((Date.now() - cachedAt) / 1000);
+			const label = ago < 5 ? "just now" : ago < 60 ? `${ago}s ago` : `${Math.round(ago / 60)}m ago`;
+			bar.createSpan({ cls: "as-dash-updated", text: `Updated ${label}` });
+		}
+
+		const buttons = bar.createDiv("as-dash-action-buttons");
+
+		const updateBtn = buttons.createEl("button", { cls: "as-action-btn", text: "Update skills" });
+		updateBtn.addEventListener("click", () => {
+			updateBtn.setText("Updating...");
+			updateBtn.disabled = true;
+			setTimeout(() => {
+				const result = updateAllSkills();
+				if (result.success) {
+					const msg = result.count > 0 ? `Updated ${result.count} skill(s)` : "All skills up to date";
+					new Notice(msg, 5000);
+					cachedData = null;
+					cachedAt = null;
+					this.render();
+				} else {
+					new Notice(`Update failed: ${result.output}`, 5000);
+				}
+				updateBtn.setText("Update skills");
+				updateBtn.disabled = false;
+			}, 10);
+		});
+
+		const scanBtn = buttons.createEl("button", { cls: "as-action-btn", text: "Scan sessions" });
+		scanBtn.addEventListener("click", () => {
+			scanBtn.setText("Scanning...");
+			scanBtn.disabled = true;
+			setTimeout(() => {
+				const result = runSkillkitAction("scan");
+				if (result.success) {
+					new Notice("Scan complete", 5000);
+					cachedData = null;
+					cachedAt = null;
+					this.render();
+				} else {
+					new Notice(`Scan failed: ${result.output}`, 5000);
+				}
+				scanBtn.setText("Scan sessions");
+				scanBtn.disabled = false;
+			}, 10);
+		});
+
+		if (data.health && data.health.usage.unused_30d > 0) {
+			const pruneBtn = buttons.createEl("button", { cls: "as-action-btn as-action-btn-danger", text: `Prune ${data.health.usage.unused_30d} stale` });
+			pruneBtn.addEventListener("click", () => {
+				showConfirmModal(this.app, "Prune stale skills", `Remove ${data.health!.usage.unused_30d} unused skills? This cannot be undone.`, () => {
+					pruneBtn.setText("Pruning...");
+					pruneBtn.disabled = true;
+					setTimeout(() => {
+						const result = runSkillkitAction("prune --yes");
+						if (result.success) {
+							new Notice("Pruned stale skills", 5000);
+							cachedData = null;
+							cachedAt = null;
+							this.render();
+						} else {
+							new Notice(`Prune failed: ${result.output}`, 5000);
+						}
+						pruneBtn.setText(`Prune ${data.health!.usage.unused_30d} stale`);
+						pruneBtn.disabled = false;
+					}, 10);
+				});
+			});
+		}
 	}
 
 	private renderNoSkillkit(): void {
@@ -177,49 +252,7 @@ export class DashboardPanel {
 
 	private renderOverview(stats: StatsJson, health: HealthJson | null): void {
 		const section = this.containerEl.createDiv("as-dash-section");
-		const titleRow = section.createDiv("as-dash-title-row");
-		titleRow.createDiv({ cls: "as-dash-title", text: "Overview" });
-		if (cachedAt) {
-			const ago = Math.round((Date.now() - cachedAt) / 1000);
-			const label = ago < 5 ? "just now" : ago < 60 ? `${ago}s ago` : `${Math.round(ago / 60)}m ago`;
-			titleRow.createSpan({ cls: "as-dash-updated", text: `Updated ${label}` });
-		}
-		const updateBtn = titleRow.createEl("button", { cls: "as-action-btn", text: "Update skills" });
-		updateBtn.addEventListener("click", () => {
-			updateBtn.setText("Updating...");
-			updateBtn.disabled = true;
-			setTimeout(() => {
-				const result = updateAllSkills();
-				if (result.success) {
-					const msg = result.count > 0 ? `Updated ${result.count} skill(s)` : "All skills up to date";
-					new Notice(msg, 5000);
-					cachedData = null;
-					cachedAt = null;
-					this.render();
-				} else {
-					new Notice(`Update failed: ${result.output}`, 5000);
-				}
-				updateBtn.setText("Update skills");
-				updateBtn.disabled = false;
-			}, 10);
-		});
-
-		const scanBtn = titleRow.createEl("button", { cls: "as-action-btn", text: "Scan sessions" });
-		scanBtn.addEventListener("click", () => {
-			scanBtn.setText("Scanning...");
-			scanBtn.disabled = true;
-			setTimeout(() => {
-				const result = runSkillkitAction("scan");
-				if (result.success) {
-					new Notice("Scan complete", 5000);
-					this.render();
-				} else {
-					new Notice(`Scan failed: ${result.output}`, 5000);
-				}
-				scanBtn.setText("Scan sessions");
-				scanBtn.disabled = false;
-			}, 10);
-		});
+		section.createDiv({ cls: "as-dash-title", text: "Overview" });
 
 		const grid = section.createDiv("as-dash-stats");
 		this.statCard(grid, String(stats.total_invocations), "invocations", "activity");
@@ -351,28 +384,7 @@ export class DashboardPanel {
 	private renderStale(health: HealthJson): void {
 		if (health.usage.never_used.length === 0) return;
 		const section = this.containerEl.createDiv("as-dash-section");
-
-		const titleRow = section.createDiv("as-dash-title-row");
-		titleRow.createDiv({ cls: "as-dash-title", text: `Stale skills (${health.usage.unused_30d})` });
-
-		const pruneBtn = titleRow.createEl("button", { cls: "as-action-btn as-action-btn-danger", text: "Prune all" });
-		pruneBtn.addEventListener("click", () => {
-			showConfirmModal(this.app, "Prune all stale skills", `Remove ${health.usage.unused_30d} unused skills? This cannot be undone.`, () => {
-				pruneBtn.setText("Pruning...");
-				pruneBtn.disabled = true;
-			setTimeout(() => {
-				const result = runSkillkitAction("prune --yes");
-				if (result.success) {
-					new Notice(`Pruned stale skills`, 5000);
-					this.render();
-				} else {
-					new Notice(`Prune failed: ${result.output}`, 5000);
-				}
-				pruneBtn.setText("Prune all");
-				pruneBtn.disabled = false;
-			}, 10);
-			});
-		});
+		section.createDiv({ cls: "as-dash-title", text: `Stale skills (${health.usage.unused_30d})` });
 
 		const list = section.createDiv("as-stale-list");
 		for (const name of health.usage.never_used.slice(0, 20)) {
