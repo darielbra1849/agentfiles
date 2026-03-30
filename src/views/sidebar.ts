@@ -9,16 +9,25 @@ export class SidebarPanel {
 	private containerEl: HTMLElement;
 	private store: SkillStore;
 	private onToggleDashboard: () => void;
+	private onToggleMarketplace: () => void;
 	private dashboardActive = false;
+	private marketplaceActive = false;
 
-	constructor(containerEl: HTMLElement, store: SkillStore, onToggleDashboard: () => void) {
+	constructor(containerEl: HTMLElement, store: SkillStore, onToggleDashboard: () => void, onToggleMarketplace: () => void) {
 		this.containerEl = containerEl;
 		this.store = store;
 		this.onToggleDashboard = onToggleDashboard;
+		this.onToggleMarketplace = onToggleMarketplace;
 	}
 
 	setDashboardActive(active: boolean): void {
 		this.dashboardActive = active;
+		if (active) this.marketplaceActive = false;
+	}
+
+	setMarketplaceActive(active: boolean): void {
+		this.marketplaceActive = active;
+		if (active) this.dashboardActive = false;
 	}
 
 	render(): void {
@@ -60,6 +69,7 @@ export class SidebarPanel {
 
 			row.addEventListener("click", () => {
 				if (this.dashboardActive) this.onToggleDashboard();
+				if (this.marketplaceActive) this.onToggleMarketplace();
 				this.store.setFilter(item.filter);
 			});
 		}
@@ -183,33 +193,41 @@ export class SidebarPanel {
 			{ label: "Favorites", icon: "star", filter: { kind: "favorites" } },
 		];
 
+		const isSpecialView = this.dashboardActive || this.marketplaceActive;
+
 		for (const item of libraryItems) {
 			const row = section.createDiv("as-sidebar-item");
-			if (!this.dashboardActive && this.isActive(item.filter)) row.addClass("is-active");
+			if (!isSpecialView && this.isActive(item.filter)) row.addClass("is-active");
 
 			const iconEl = row.createSpan("as-sidebar-icon");
 			setIcon(iconEl, item.icon);
 			row.createSpan({ cls: "as-sidebar-label", text: item.label });
 
 			row.addEventListener("click", () => {
-				if (this.dashboardActive) {
-					this.onToggleDashboard();
-				}
+				if (this.dashboardActive) this.onToggleDashboard();
+				if (this.marketplaceActive) this.onToggleMarketplace();
 				this.store.setFilter(item.filter);
 			});
 		}
 
 		const dashRow = section.createDiv("as-sidebar-item");
 		if (this.dashboardActive) dashRow.addClass("is-active");
-
 		const dashIcon = dashRow.createSpan("as-sidebar-icon");
 		setIcon(dashIcon, "bar-chart-2");
 		dashRow.createSpan({ cls: "as-sidebar-label", text: "Dashboard" });
-
 		dashRow.addEventListener("click", () => {
-			if (!this.dashboardActive) {
-				this.onToggleDashboard();
-			}
+			if (this.marketplaceActive) this.onToggleMarketplace();
+			if (!this.dashboardActive) this.onToggleDashboard();
+		});
+
+		const mpRow = section.createDiv("as-sidebar-item");
+		if (this.marketplaceActive) mpRow.addClass("is-active");
+		const mpIcon = mpRow.createSpan("as-sidebar-icon");
+		setIcon(mpIcon, "shopping-bag");
+		mpRow.createSpan({ cls: "as-sidebar-label", text: "Marketplace" });
+		mpRow.addEventListener("click", () => {
+			if (this.dashboardActive) this.onToggleDashboard();
+			if (!this.marketplaceActive) this.onToggleMarketplace();
 		});
 	}
 
