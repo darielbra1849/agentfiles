@@ -1,5 +1,5 @@
 import { MarkdownRenderer, Notice, setIcon } from "obsidian";
-import { searchSkills, fetchSkillContent, installSkill, formatInstalls, type MarketplaceSkill } from "../marketplace";
+import { searchSkills, fetchSkillContent, installSkill, formatInstalls, getPopularSkills, type MarketplaceSkill } from "../marketplace";
 import { TOOL_CONFIGS } from "../tool-configs";
 import { getInstalledTools } from "../scanner";
 
@@ -37,8 +37,28 @@ export class MarketplacePanel {
 		this.listEl = body.createDiv("as-mp-list");
 		this.previewEl = body.createDiv("as-mp-preview");
 
-		this.listEl.createDiv({ cls: "as-mp-hint", text: "Search for skills to browse and install." });
 		this.previewEl.createDiv({ cls: "as-mp-hint", text: "Select a skill to preview." });
+
+		void this.loadPopular();
+	}
+
+	private async loadPopular(): Promise<void> {
+		if (!this.listEl) return;
+		this.listEl.empty();
+		this.listEl.createDiv({ cls: "as-mp-loading", text: "Loading popular skills..." });
+
+		const popular = await getPopularSkills();
+		this.listEl.empty();
+
+		if (popular.length === 0) {
+			this.listEl.createDiv({ cls: "as-mp-hint", text: "Search for skills to browse and install." });
+			return;
+		}
+
+		this.listEl.createDiv({ cls: "as-mp-section-title", text: "Popular" });
+		for (const skill of popular) {
+			this.renderSkillCard(skill);
+		}
 	}
 
 	private async doSearch(query: string): Promise<void> {
@@ -116,7 +136,7 @@ export class MarketplacePanel {
 		const contentEl = this.previewEl.createDiv("as-mp-preview-content");
 		contentEl.createDiv({ cls: "as-mp-loading", text: "Loading skill content..." });
 
-		const content = await fetchSkillContent(skill.source, skill.name);
+		const content = await fetchSkillContent(skill.source, skill.name, skill.id);
 		contentEl.empty();
 
 		if (content) {

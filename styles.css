@@ -1526,3 +1526,12 @@
 	font-family: var(--font-monospace);
 	font-size: var(--code-size);
 }
+
+.as-mp-section-title {
+	font-size: var(--font-smallest);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-muted);
+	padding: 8px 12px 4px;
+}

@@ -37,31 +37,71 @@ export async function searchSkills(query: string): Promise<MarketplaceSkill[]> {
 	}
 }
 
-export async function fetchSkillContent(source: string, skillName: string): Promise<string | null> {
+export async function fetchSkillContent(source: string, skillName: string, skillId: string): Promise<string | null> {
 	try {
 		const repoRes = await requestUrl({
 			url: `https://api.github.com/repos/${source}`,
 		});
 		const defaultBranch = repoRes.json.default_branch || "main";
 
-		const paths = [
+		const treeRes = await requestUrl({
+			url: `https://api.github.com/repos/${source}/git/trees/${defaultBranch}?recursive=1`,
+		});
+		const tree = treeRes.json.tree as { path: string }[];
+		const skillMdFiles = tree
+			.filter((t) => t.path.endsWith("/SKILL.md"))
+			.map((t) => t.path);
+
+		const idParts = skillId.split("/");
+		const folderName = idParts[idParts.length - 1] || skillName;
+
+		const match = skillMdFiles.find((p) => {
+			const dir = p.replace("/SKILL.md", "").split("/").pop();
+			return dir === folderName || dir === skillName;
+		});
+
+		if (match) {
+			const contentRes = await requestUrl({
+				url: `https://raw.githubusercontent.com/${source}/${defaultBranch}/${match}`,
+			});
+			return contentRes.text;
+		}
+
+		const fallbacks = [
 			`skills/${skillName}/SKILL.md`,
 			`${skillName}/SKILL.md`,
 			`SKILL.md`,
 		];
-
-		for (const path of paths) {
+		for (const path of fallbacks) {
 			try {
 				const contentRes = await requestUrl({
 					url: `https://raw.githubusercontent.com/${source}/${defaultBranch}/${path}`,
 				});
-				if (contentRes.status === 200) return contentRes.text;
+				return contentRes.text;
 			} catch { /* empty */ }
 		}
 		return null;
 	} catch { /* empty */
 		return null;
 	}
+}
+
+export async function getPopularSkills(): Promise<MarketplaceSkill[]> {
+	const queries = ["react", "next", "clerk", "stripe", "ai"];
+	const seen = new Set<string>();
+	const results: MarketplaceSkill[] = [];
+
+	for (const q of queries) {
+		const skills = await searchSkills(q);
+		for (const s of skills) {
+			if (!seen.has(s.id)) {
+				seen.add(s.id);
+				results.push(s);
+			}
+		}
+	}
+
+	return results.sort((a, b) => b.installs - a.installs).slice(0, 20);
 }
 
 function buildPath(): string {
