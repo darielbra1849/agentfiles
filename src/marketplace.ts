@@ -151,10 +151,50 @@ function getRunner(preference: "auto" | "npx" | "bunx" = "auto"): string {
 	return detectRunner();
 }
 
-export function installSkill(source: string, agents: string[], runner: "auto" | "npx" | "bunx" = "auto"): { success: boolean; output: string } {
+export const VALID_AGENTS: { id: string; label: string }[] = [
+	{ id: "claude-code", label: "Claude Code" },
+	{ id: "cursor", label: "Cursor" },
+	{ id: "codex", label: "Codex" },
+	{ id: "github-copilot", label: "GitHub Copilot" },
+	{ id: "windsurf", label: "Windsurf" },
+	{ id: "amp", label: "Amp" },
+	{ id: "opencode", label: "OpenCode" },
+	{ id: "cline", label: "Cline" },
+	{ id: "gemini-cli", label: "Gemini CLI" },
+	{ id: "goose", label: "Goose" },
+	{ id: "kiro-cli", label: "Kiro" },
+	{ id: "roo", label: "Roo Code" },
+	{ id: "continue", label: "Continue" },
+	{ id: "antigravity", label: "Antigravity" },
+	{ id: "warp", label: "Warp" },
+	{ id: "pi", label: "Pi" },
+	{ id: "replit", label: "Replit" },
+];
+
+export const TOOL_TO_AGENT: Record<string, string> = {
+	"claude-code": "claude-code",
+	"cursor": "cursor",
+	"codex": "codex",
+	"copilot": "github-copilot",
+	"windsurf": "windsurf",
+	"amp": "amp",
+	"opencode": "opencode",
+	"antigravity": "antigravity",
+	"claude-desktop": "claude-code",
+	"pi": "pi",
+	"global-agents": "claude-code",
+	"aider": "claude-code",
+};
+
+export function installSkill(
+	source: string,
+	agents: string[],
+	options: { runner?: "auto" | "npx" | "bunx"; global?: boolean } = {}
+): { success: boolean; output: string } {
 	const agentFlag = agents.length > 0 ? `-a ${agents.join(" ")}` : "-a '*'";
-	const resolvedRunner = getRunner(runner);
-	const cmd = `${resolvedRunner} skills add ${source} ${agentFlag} -y`;
+	const globalFlag = options.global ? "-g" : "";
+	const resolvedRunner = getRunner(options.runner || "auto");
+	const cmd = `${resolvedRunner} skills add ${source} ${agentFlag} ${globalFlag} -y`.replace(/\s+/g, " ").trim();
 	try {
 		const out = execSync(cmd, {
 			encoding: "utf-8",

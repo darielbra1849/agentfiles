@@ -1,8 +1,7 @@
-import { MarkdownRenderer, Notice, setIcon } from "obsidian";
-import { searchSkills, fetchSkillContent, installSkill, formatInstalls, getPopularSkills, type MarketplaceSkill } from "../marketplace";
-import { TOOL_CONFIGS } from "../tool-configs";
-import { getInstalledTools } from "../scanner";
+import { MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
+import { searchSkills, fetchSkillContent, formatInstalls, getPopularSkills, type MarketplaceSkill } from "../marketplace";
 import type { ChopsSettings } from "../types";
+import { InstallSkillModal } from "./install-modal";
 
 export class MarketplacePanel {
 	private containerEl: HTMLElement;
@@ -11,13 +10,15 @@ export class MarketplacePanel {
 	private searchTimer: ReturnType<typeof setTimeout> | null = null;
 	private selectedSkill: MarketplaceSkill | null = null;
 	private popularCache: MarketplaceSkill[] = [];
-	private app: { app: { workspace: unknown } };
+	private app: App;
 	private settings: ChopsSettings;
+	private onRefresh: () => void;
 
-	constructor(containerEl: HTMLElement, app: { app: { workspace: unknown } }, settings: ChopsSettings) {
+	constructor(containerEl: HTMLElement, view: { app: App }, settings: ChopsSettings, onRefresh: () => void) {
 		this.containerEl = containerEl;
-		this.app = app;
+		this.app = view.app;
 		this.settings = settings;
+		this.onRefresh = onRefresh;
 	}
 
 	render(): void {
@@ -152,7 +153,7 @@ export class MarketplacePanel {
 			skill.content = content;
 			const rendered = contentEl.createDiv("as-mp-rendered markdown-rendered");
 			void MarkdownRenderer.render(
-				(this.app as unknown as { app: unknown }).app as import("obsidian").App,
+				this.app,
 				content,
 				rendered,
 				"",
@@ -165,31 +166,13 @@ export class MarketplacePanel {
 
 	private renderInstallButton(container: HTMLElement, skill: MarketplaceSkill): void {
 		const row = container.createDiv("as-mp-install-row");
-
-		const installedTools = getInstalledTools();
-		const agentOptions = TOOL_CONFIGS
-			.filter((t) => t.isInstalled() && installedTools.includes(t.id))
-			.slice(0, 5);
-
 		const btn = row.createEl("button", { cls: "as-mp-install-btn", text: "Install" });
 
 		btn.addEventListener("click", () => {
-			btn.setText("Installing...");
-			btn.disabled = true;
-
-			const agents = agentOptions.map((a) => a.id);
-			setTimeout(() => {
-				const result = installSkill(skill.source, agents, this.settings.packageRunner);
-				if (result.success) {
-					new Notice(`Installed ${skill.name}`);
-					skill.installed = true;
-					void this.showPreview(skill);
-				} else {
-					new Notice(`Failed to install: ${result.output}`);
-					btn.setText("Install");
-					btn.disabled = false;
-				}
-			}, 10);
+			new InstallSkillModal(this.app, skill, this.settings, () => {
+				this.onRefresh();
+				void this.showPreview(skill);
+			}).open();
 		});
 	}
 }

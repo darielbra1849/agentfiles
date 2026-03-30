@@ -1535,3 +1535,15 @@
 	color: var(--text-muted);
 	padding: 8px 12px 4px;
 }
+
+/* Install modal */
+.as-install-modal h3 {
+	margin: 0 0 4px;
+}
+
+.as-install-source {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+	font-family: var(--font-monospace);
+	margin: 0 0 12px;
+}
