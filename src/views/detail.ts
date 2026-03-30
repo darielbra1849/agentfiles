@@ -7,6 +7,7 @@ import { TOOL_CONFIGS } from "../tool-configs";
 import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
 import { formatLastUsed, getSkillTraces, runSkillkitAction, isSkillkitAvailable } from "../skillkit";
 import { renderSparkline } from "./sparkline";
+import { showConfirmModal } from "./confirm-modal";
 
 function estimateTokens(text: string): number {
 	return Math.ceil(text.length / 4);
@@ -128,7 +129,7 @@ export class DetailPanel {
 
 		const openBtn = right.createEl("button", {
 			cls: "as-toolbar-btn",
-			attr: { "aria-label": "Open in Finder" },
+			attr: { "aria-label": "Show in system explorer" },
 		});
 		setIcon(openBtn, "folder-open");
 		openBtn.addEventListener("click", () => {
@@ -142,16 +143,16 @@ export class DetailPanel {
 			});
 			setIcon(deleteBtn, "trash-2");
 			deleteBtn.addEventListener("click", () => {
-				const confirmed = confirm(`Remove "${item.name}"? This will delete the skill files.`);
-				if (!confirmed) return;
-				const result = runSkillkitAction(`prune --skill ${item.name} --yes`);
-				if (result.success) {
-					new Notice(`Removed ${item.name}`);
-					this.store.refresh(this.settings);
-					this.clear();
-				} else {
-					new Notice(`Failed to remove: ${result.output}`);
-				}
+				showConfirmModal(this.app, "Remove skill", `Remove "${item.name}"? This will delete the skill files.`, () => {
+					const result = runSkillkitAction(`prune --skill ${item.name} --yes`);
+					if (result.success) {
+						new Notice(`Removed ${item.name}`);
+						this.store.refresh(this.settings);
+						this.clear();
+					} else {
+						new Notice(`Failed to remove: ${result.output}`);
+					}
+				});
 			});
 		}
 
@@ -311,16 +312,15 @@ export class DetailPanel {
 		section.createSpan({ cls: "as-prune-hint", text: "This skill hasn't been used in 30+ days" });
 
 		btn.addEventListener("click", () => {
-			const confirmed = confirm(`Remove "${item.name}"? This will delete the skill files.`);
-			if (!confirmed) return;
-
-			const result = runSkillkitAction(`prune --skill ${item.name} --yes`);
-			if (result.success) {
-				new Notice(`Removed ${item.name}`);
-				this.store.refresh(this.settings);
-			} else {
-				new Notice(`Failed to remove: ${result.output}`);
-			}
+			showConfirmModal(this.app, "Remove skill", `Remove "${item.name}"? This will delete the skill files.`, () => {
+				const result = runSkillkitAction(`prune --skill ${item.name} --yes`);
+				if (result.success) {
+					new Notice(`Removed ${item.name}`);
+					this.store.refresh(this.settings);
+				} else {
+					new Notice(`Failed to remove: ${result.output}`);
+				}
+			});
 		});
 	}
 

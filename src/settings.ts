@@ -14,8 +14,6 @@ export class AgentfilesSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		new Setting(containerEl).setName("General").setHeading();
-
 		new Setting(containerEl)
 			.setName("File watching")
 			.setDesc("Automatically detect changes to skill files")

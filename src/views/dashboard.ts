@@ -1,6 +1,7 @@
-import { Notice, setIcon } from "obsidian";
+import { Notice, setIcon, type App } from "obsidian";
 import { shell } from "electron";
 import { isSkillkitAvailable, runSkillkitJson, runSkillkitAction } from "../skillkit";
+import { showConfirmModal } from "./confirm-modal";
 
 interface StatsJson {
 	period: { days: number };
@@ -58,9 +59,11 @@ function loadData(): DashboardData {
 
 export class DashboardPanel {
 	private containerEl: HTMLElement;
+	private app: App;
 
-	constructor(containerEl: HTMLElement) {
+	constructor(containerEl: HTMLElement, app: App) {
 		this.containerEl = containerEl;
+		this.app = app;
 	}
 
 	render(): void {
@@ -268,10 +271,9 @@ export class DashboardPanel {
 
 		const pruneBtn = titleRow.createEl("button", { cls: "as-action-btn as-action-btn-danger", text: "Prune all" });
 		pruneBtn.addEventListener("click", () => {
-			const confirmed = confirm(`Remove ${health.usage.unused_30d} unused skills? This cannot be undone.`);
-			if (!confirmed) return;
-			pruneBtn.setText("Pruning...");
-			pruneBtn.disabled = true;
+			showConfirmModal(this.app, "Prune all stale skills", `Remove ${health.usage.unused_30d} unused skills? This cannot be undone.`, () => {
+				pruneBtn.setText("Pruning...");
+				pruneBtn.disabled = true;
 			setTimeout(() => {
 				const result = runSkillkitAction("prune --yes");
 				if (result.success) {
@@ -283,6 +285,7 @@ export class DashboardPanel {
 				pruneBtn.setText("Prune all");
 				pruneBtn.disabled = false;
 			}, 10);
+			});
 		});
 
 		const list = section.createDiv("as-stale-list");
