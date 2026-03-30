@@ -1779,3 +1779,65 @@
 	padding-top: 8px;
 	border-top: 1px solid var(--background-modifier-border);
 }
+
+/* Filter dropdown */
+.as-search {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.as-filter-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	color: var(--text-muted);
+	flex-shrink: 0;
+}
+
+.as-filter-btn:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.as-filter-btn svg {
+	width: 14px;
+	height: 14px;
+}
+
+.as-filter-dropdown {
+	position: absolute;
+	top: 100%;
+	right: 0;
+	z-index: 10;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	min-width: 120px;
+	padding: 4px;
+	margin-top: 4px;
+}
+
+.as-filter-option {
+	padding: 4px 10px;
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	text-transform: capitalize;
+}
+
+.as-filter-option:hover {
+	background: var(--background-modifier-hover);
+}
+
+.as-filter-option.is-active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}

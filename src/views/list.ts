@@ -11,6 +11,8 @@ export class ListPanel {
 	private selectedId: string | null = null;
 	private inputEl: HTMLInputElement | null = null;
 	private listEl: HTMLElement | null = null;
+	private typeFilter: string | null = null;
+	private dropdownEl: HTMLElement | null = null;
 
 	constructor(
 		containerEl: HTMLElement,
@@ -41,6 +43,13 @@ export class ListPanel {
 				this.store.setSearch(this.inputEl!.value);
 			});
 
+			const filterBtn = searchContainer.createDiv("as-filter-btn");
+			setIcon(filterBtn, "filter");
+			filterBtn.addEventListener("click", (e) => {
+				e.stopPropagation();
+				this.toggleDropdown(filterBtn);
+			});
+
 			this.listEl = this.containerEl.createDiv("as-list-items");
 		}
 
@@ -48,11 +57,51 @@ export class ListPanel {
 		this.renderList();
 	}
 
+	private toggleDropdown(anchor: HTMLElement): void {
+		if (this.dropdownEl) {
+			this.dropdownEl.remove();
+			this.dropdownEl = null;
+			return;
+		}
+
+		this.dropdownEl = anchor.createDiv("as-filter-dropdown");
+
+		const types = ["all", "skill", "command", "agent", "rule"];
+		for (const type of types) {
+			const item = this.dropdownEl.createDiv("as-filter-option");
+			if ((type === "all" && !this.typeFilter) || type === this.typeFilter) {
+				item.addClass("is-active");
+			}
+			item.setText(type === "all" ? "All types" : type);
+			item.addEventListener("click", (e) => {
+				e.stopPropagation();
+				this.typeFilter = type === "all" ? null : type;
+				if (this.dropdownEl) {
+					this.dropdownEl.remove();
+					this.dropdownEl = null;
+				}
+				this.renderList();
+			});
+		}
+
+		const closeHandler = () => {
+			if (this.dropdownEl) {
+				this.dropdownEl.remove();
+				this.dropdownEl = null;
+			}
+			document.removeEventListener("click", closeHandler);
+		};
+		setTimeout(() => document.addEventListener("click", closeHandler), 0);
+	}
+
 	private renderList(): void {
 		if (!this.listEl) return;
 		this.listEl.empty();
 
-		const items = this.store.filteredItems;
+		let items = this.store.filteredItems;
+		if (this.typeFilter) {
+			items = items.filter((i) => i.type === this.typeFilter);
+		}
 
 		if (items.length === 0) {
 			this.listEl.createDiv({
