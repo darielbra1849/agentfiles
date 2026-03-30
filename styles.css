@@ -1841,3 +1841,26 @@
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 }
+
+/* Active filter indicator */
+.as-active-filter {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 4px 8px;
+	margin: 4px 4px 0;
+	font-size: var(--font-smallest);
+	color: var(--text-muted);
+	background: var(--background-secondary);
+	border-radius: var(--radius-s);
+}
+
+.as-filter-clear {
+	color: var(--text-accent);
+	cursor: pointer;
+	font-weight: 500;
+}
+
+.as-filter-clear:hover {
+	text-decoration: underline;
+}

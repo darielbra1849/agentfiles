@@ -12,6 +12,7 @@ export class ListPanel {
 	private inputEl: HTMLInputElement | null = null;
 	private listEl: HTMLElement | null = null;
 	private typeFilter: string | null = null;
+	private sortBy: "name" | "usage" = "name";
 	private dropdownEl: HTMLElement | null = null;
 
 	constructor(
@@ -45,9 +46,20 @@ export class ListPanel {
 
 			const filterBtn = searchContainer.createDiv("as-filter-btn");
 			setIcon(filterBtn, "filter");
+			filterBtn.setAttribute("aria-label", "Filter by status");
 			filterBtn.addEventListener("click", (e) => {
 				e.stopPropagation();
 				this.toggleDropdown(filterBtn);
+			});
+
+			const sortBtn = searchContainer.createDiv("as-filter-btn");
+			setIcon(sortBtn, this.sortBy === "usage" ? "arrow-down-wide-narrow" : "arrow-down-a-z");
+			sortBtn.setAttribute("aria-label", this.sortBy === "usage" ? "Sorted by usage" : "Sorted by name");
+			sortBtn.addEventListener("click", () => {
+				this.sortBy = this.sortBy === "name" ? "usage" : "name";
+				setIcon(sortBtn, this.sortBy === "usage" ? "arrow-down-wide-narrow" : "arrow-down-a-z");
+				sortBtn.setAttribute("aria-label", this.sortBy === "usage" ? "Sorted by usage" : "Sorted by name");
+				this.renderList();
 			});
 
 			this.listEl = this.containerEl.createDiv("as-list-items");
@@ -125,6 +137,21 @@ export class ListPanel {
 					items = items.filter((i) => i.conflicts && i.conflicts.length > 0);
 					break;
 			}
+		}
+
+		if (this.sortBy === "usage") {
+			items = [...items].sort((a, b) => (b.usage?.uses ?? 0) - (a.usage?.uses ?? 0));
+		}
+
+		if (this.typeFilter) {
+			const labels: Record<string, string> = { stale: "Stale", heavy: "Heavy", oversized: "Oversized", conflict: "Conflict" };
+			const filterLabel = this.listEl.createDiv("as-active-filter");
+			filterLabel.createSpan({ text: `Showing: ${labels[this.typeFilter] ?? this.typeFilter}` });
+			const clearBtn = filterLabel.createSpan({ cls: "as-filter-clear", text: "Clear" });
+			clearBtn.addEventListener("click", () => {
+				this.typeFilter = null;
+				this.renderList();
+			});
 		}
 
 		if (items.length === 0) {
