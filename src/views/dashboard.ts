@@ -59,6 +59,9 @@ function loadData(): DashboardData {
 
 let cachedData: DashboardData | null = null;
 let cachedAt: number | null = null;
+let refreshing = false;
+
+const CACHE_TTL = 60_000;
 
 export class DashboardPanel {
 	private containerEl: HTMLElement;
@@ -80,7 +83,10 @@ export class DashboardPanel {
 
 		if (cachedData) {
 			this.renderDashboard(cachedData);
-			this.refreshInBackground();
+			const stale = !cachedAt || (Date.now() - cachedAt) > CACHE_TTL;
+			if (stale && !refreshing) {
+				this.refreshInBackground();
+			}
 		} else {
 			const loading = this.containerEl.createDiv("as-dash-loading");
 			loading.createDiv("as-dash-spinner");
@@ -97,14 +103,18 @@ export class DashboardPanel {
 	}
 
 	private refreshInBackground(): void {
+		refreshing = true;
 		setTimeout(() => {
 			const data = loadData();
 			cachedData = data;
 			cachedAt = Date.now();
-			this.containerEl.empty();
-			this.containerEl.addClass("as-dashboard");
-			this.renderDashboard(data);
-		}, 50);
+			refreshing = false;
+			if (this.containerEl.hasClass("as-dashboard")) {
+				this.containerEl.empty();
+				this.containerEl.addClass("as-dashboard");
+				this.renderDashboard(data);
+			}
+		}, 100);
 	}
 
 	private renderDashboard(data: DashboardData): void {
