@@ -137,10 +137,19 @@ function buildPath(): string {
 	return [...extra, process.env.PATH || ""].join(":");
 }
 
+function getRunner(): string {
+	const bunPath = join(HOME, ".bun", "bin", "bunx");
+	if (existsSync(bunPath)) return bunPath;
+	if (existsSync("/usr/local/bin/bunx")) return "bunx";
+	if (existsSync("/opt/homebrew/bin/bunx")) return "bunx";
+	return "npx";
+}
+
 export function installSkill(source: string, agents: string[]): { success: boolean; output: string } {
 	const agentFlag = agents.length > 0 ? `-a ${agents.join(" ")}` : "-a '*'";
+	const runner = getRunner();
 	try {
-		const out = execSync(`npx skills add ${source} ${agentFlag} -y`, {
+		const out = execSync(`${runner} skills add ${source} ${agentFlag} -y`, {
 			encoding: "utf-8",
 			timeout: 60000,
 			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },

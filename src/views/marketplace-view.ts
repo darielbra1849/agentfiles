@@ -174,7 +174,7 @@ export class MarketplacePanel {
 			btn.setText("Installing...");
 			btn.disabled = true;
 
-			const agents = agentOptions.map((a) => a.id.replace("-", " "));
+			const agents = agentOptions.map((a) => a.id);
 			setTimeout(() => {
 				const result = installSkill(skill.source, agents);
 				if (result.success) {
