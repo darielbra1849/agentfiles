@@ -1733,3 +1733,13 @@
 	color: var(--color-green);
 	font-weight: 500;
 }
+
+.as-install-detected {
+	font-size: 10px;
+	padding: 1px 6px;
+	border-radius: 10px;
+	background: var(--background-modifier-hover);
+	color: var(--text-faint);
+	margin-left: 6px;
+	font-weight: 400;
+}

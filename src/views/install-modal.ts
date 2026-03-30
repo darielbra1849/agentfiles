@@ -59,7 +59,6 @@ export class InstallSkillModal extends Modal {
 			const isInstalled = installedAgentIds.has(agent.id);
 			const toolId = AGENT_TO_TOOL[agent.id];
 			const setting = new Setting(contentEl)
-				.setDesc(isInstalled ? "Detected" : "")
 				.addToggle((toggle) =>
 					toggle
 						.setValue(this.selectedAgents.has(agent.id))
@@ -83,6 +82,9 @@ export class InstallSkillModal extends Modal {
 				renderToolIcon(iconSpan, iconKey, 14);
 			}
 			nameEl.createSpan({ text: agent.label });
+			if (isInstalled) {
+				nameEl.createSpan({ cls: "as-install-detected", text: "detected" });
+			}
 		}
 
 		new Setting(contentEl)
