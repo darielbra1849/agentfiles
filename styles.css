@@ -1681,3 +1681,55 @@
 	display: flex;
 	gap: 6px;
 }
+
+/* Dashboard streak and velocity */
+.as-dash-streak-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 10px;
+	font-size: var(--font-ui-small);
+}
+
+.as-streak-value {
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.as-streak-fire {
+	font-size: 10px;
+	padding: 1px 6px;
+	border-radius: var(--radius-s);
+	background: var(--color-orange);
+	color: var(--background-primary);
+	font-weight: 500;
+	text-transform: uppercase;
+}
+
+.as-streak-longest {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}
+
+.as-dash-velocity-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 4px;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
+.as-velocity-vs {
+	color: var(--text-faint);
+}
+
+.as-velocity-up {
+	color: var(--color-red);
+	font-weight: 500;
+}
+
+.as-velocity-down {
+	color: var(--color-green);
+	font-weight: 500;
+}

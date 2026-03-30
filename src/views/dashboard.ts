@@ -9,6 +9,8 @@ interface StatsJson {
 	total_invocations: number;
 	unique_skills: number;
 	most_active_day: string;
+	streak?: { current: number; longest: number };
+	velocity?: { this_week: number; last_week: number; change_pct: number };
 	top_skills: { name: string; total: number; daily: { date: string; count: number }[] }[];
 }
 
@@ -259,6 +261,25 @@ export class DashboardPanel {
 		this.statCard(grid, String(stats.unique_skills), "active skills", "sparkles");
 		this.statCard(grid, String(health?.installed ?? 0), "installed", "package");
 		this.statCard(grid, String(health?.usage.unused_30d ?? 0), "stale", "alert-triangle");
+
+		if (stats.streak && stats.streak.current > 0) {
+			const streakRow = section.createDiv("as-dash-streak-row");
+			streakRow.createSpan({ cls: "as-streak-value", text: `${stats.streak.current} day streak` });
+			if (stats.streak.current >= 7) {
+				streakRow.createSpan({ cls: "as-streak-fire", text: "on fire" });
+			}
+			streakRow.createSpan({ cls: "as-streak-longest", text: `longest: ${stats.streak.longest}d` });
+		}
+
+		if (stats.velocity && stats.velocity.this_week > 0) {
+			const velRow = section.createDiv("as-dash-velocity-row");
+			velRow.createSpan({ text: `This week: $${stats.velocity.this_week.toFixed(0)}` });
+			velRow.createSpan({ cls: "as-velocity-vs", text: `vs $${stats.velocity.last_week.toFixed(0)} last week` });
+			const changePct = stats.velocity.change_pct;
+			const changeClass = changePct > 0 ? "as-velocity-up" : changePct < 0 ? "as-velocity-down" : "";
+			const changeSign = changePct > 0 ? "+" : "";
+			velRow.createSpan({ cls: `as-velocity-change ${changeClass}`, text: `${changeSign}${changePct.toFixed(0)}%` });
+		}
 	}
 
 	private statCard(container: HTMLElement, value: string, label: string, icon: string): void {
