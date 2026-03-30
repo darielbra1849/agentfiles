@@ -1,14 +1,20 @@
 import { Modal, Notice, Setting, type App } from "obsidian";
 import { installSkill, VALID_AGENTS, TOOL_TO_AGENT, type MarketplaceSkill } from "../marketplace";
 import { getInstalledTools } from "../scanner";
+import { TOOL_SVGS, renderToolIcon } from "../tool-icons";
 import type { ChopsSettings } from "../types";
+
+const AGENT_TO_TOOL: Record<string, string> = {};
+for (const [toolId, agentId] of Object.entries(TOOL_TO_AGENT)) {
+	if (!AGENT_TO_TOOL[agentId]) AGENT_TO_TOOL[agentId] = toolId;
+}
 
 export class InstallSkillModal extends Modal {
 	private skill: MarketplaceSkill;
 	private settings: ChopsSettings;
 	private onInstalled: () => void;
 	private selectedAgents = new Set<string>();
-	private isGlobal = false;
+	private isGlobal = true;
 
 	constructor(app: App, skill: MarketplaceSkill, settings: ChopsSettings, onInstalled: () => void) {
 		super(app);
@@ -33,6 +39,15 @@ export class InstallSkillModal extends Modal {
 			text: this.skill.source,
 		});
 
+		new Setting(contentEl)
+			.setName("Install globally")
+			.setDesc("Shared across all projects (~/.agents/skills/)")
+			.addToggle((toggle) =>
+				toggle.setValue(this.isGlobal).onChange((value) => {
+					this.isGlobal = value;
+				})
+			);
+
 		new Setting(contentEl).setName("Agents").setHeading();
 
 		const installed = getInstalledTools();
@@ -42,8 +57,8 @@ export class InstallSkillModal extends Modal {
 
 		for (const agent of VALID_AGENTS) {
 			const isInstalled = installedAgentIds.has(agent.id);
-			new Setting(contentEl)
-				.setName(agent.label)
+			const toolId = AGENT_TO_TOOL[agent.id];
+			const setting = new Setting(contentEl)
 				.setDesc(isInstalled ? "Detected" : "")
 				.addToggle((toggle) =>
 					toggle
@@ -56,18 +71,14 @@ export class InstallSkillModal extends Modal {
 							}
 						})
 				);
+
+			const nameEl = setting.nameEl;
+			if (toolId && TOOL_SVGS[toolId]) {
+				const iconSpan = nameEl.createSpan("as-install-agent-icon");
+				renderToolIcon(iconSpan, toolId, 14);
+			}
+			nameEl.createSpan({ text: agent.label });
 		}
-
-		new Setting(contentEl).setName("Scope").setHeading();
-
-		new Setting(contentEl)
-			.setName("Install globally")
-			.setDesc("Install to ~/.agents/skills/ instead of project-level")
-			.addToggle((toggle) =>
-				toggle.setValue(this.isGlobal).onChange((value) => {
-					this.isGlobal = value;
-				})
-			);
 
 		new Setting(contentEl)
 			.addButton((btn) =>
