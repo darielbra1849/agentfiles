@@ -63,7 +63,7 @@ import { join } from "path";
 import { homedir } from "os";
 
 const CACHE_FILE = join(homedir(), ".skillkit", "dashboard-cache.json");
-const CACHE_TTL = 60_000;
+const CACHE_TTL = 300_000;
 
 let cachedData: DashboardData | null = null;
 let cachedAt: number | null = null;

@@ -2,7 +2,7 @@ import { MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
-import { searchSkills, fetchSkillContent, formatInstalls, getPopularSkills, removeSkill, type MarketplaceSkill } from "../marketplace";
+import { searchSkills, fetchSkillContent, formatInstalls, getPopularSkills, removeSkill, refreshInstalledStatus, type MarketplaceSkill } from "../marketplace";
 import type { ChopsSettings } from "../types";
 import { InstallSkillModal } from "./install-modal";
 import { showConfirmModal } from "./confirm-modal";
@@ -17,7 +17,8 @@ function loadPopularFromDisk(): void {
 	if (cachedPopular) return;
 	if (!existsSync(POPULAR_CACHE_FILE)) return;
 	try {
-		cachedPopular = JSON.parse(readFileSync(POPULAR_CACHE_FILE, "utf-8"));
+		const skills = JSON.parse(readFileSync(POPULAR_CACHE_FILE, "utf-8")) as MarketplaceSkill[];
+		cachedPopular = refreshInstalledStatus(skills);
 	} catch { /* empty */ }
 }
 

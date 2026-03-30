@@ -318,6 +318,14 @@ export function updateAllSkills(runner: "auto" | "npx" | "bunx" = "auto"): { suc
 	}
 }
 
+export function refreshInstalledStatus(skills: MarketplaceSkill[]): MarketplaceSkill[] {
+	const installed = getInstalledNames();
+	for (const s of skills) {
+		s.installed = installed.has(s.name);
+	}
+	return skills;
+}
+
 export function formatInstalls(n: number): string {
 	if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
 	if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;

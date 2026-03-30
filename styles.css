@@ -1316,8 +1316,9 @@
 	border-color: var(--text-error);
 }
 
-.as-action-btn-danger {
+.as-action-btn.as-action-btn-danger {
 	background: var(--background-modifier-error);
+	color: var(--text-on-accent);
 }
 
 /* Marketplace */
