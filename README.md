@@ -2,6 +2,10 @@
 
 Discover, organize, and edit AI agent skills, commands, and agents across Claude Code, Cursor, Codex, Windsurf, and more — from inside Obsidian.
 
+![Browse skills, commands, and agents across 13+ coding assistants](assets/browse.jpeg)
+
+![Dashboard with burn rate, context tax, and health metrics](assets/dashboard.jpeg)
+
 ## Features
 
 ### Skill browser
