@@ -123,6 +123,7 @@ export function runSkillkitJson(cmd: string): Record<string, unknown> | unknown[
 			timeout: 15000,
 			env: { ...process.env, NO_COLOR: "1", PATH: buildPath() },
 			stdio: ["pipe", "pipe", "pipe"],
+			shell: IS_WIN,
 		}).trim();
 		const jsonStart = out.indexOf("{");
 		const jsonStartArr = out.indexOf("[");
@@ -262,6 +263,7 @@ export function runSkillkitAction(cmd: string): { success: boolean; output: stri
 			timeout: 30000,
 			env: { ...process.env, NO_COLOR: "1", PATH: buildPath() },
 			stdio: ["pipe", "pipe", "pipe"],
+			shell: IS_WIN,
 		}).trim();
 		return { success: true, output: out };
 	} catch (e: unknown) { /* empty */
