@@ -1,5 +1,5 @@
 import { homedir } from "os";
-import { existsSync } from "fs";
+import { existsSync, readdirSync } from "fs";
 import { join } from "path";
 import type { ToolConfig } from "./types";
 

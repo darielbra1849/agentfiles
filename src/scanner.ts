@@ -70,8 +70,10 @@ function scanDirectoryWithSkillMd(
 	const items: SkillItem[] = [];
 
 	for (const entry of readdirSync(baseDir, { withFileTypes: true })) {
-		if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
-		const skillFile = join(baseDir, entry.name, "SKILL.md");
+		const fullPath = join(baseDir, entry.name);
+		const isDir = entry.isDirectory() || (entry.isSymbolicLink() && statSync(fullPath, { throwIfNoEntry: false })?.isDirectory());
+		if (!isDir) continue;
+		const skillFile = join(fullPath, "SKILL.md");
 		if (!existsSync(skillFile)) continue;
 
 		const item = parseSkillFile(skillFile, type, toolId);
@@ -89,14 +91,17 @@ function scanFlatMd(
 	const items: SkillItem[] = [];
 
 	for (const entry of readdirSync(baseDir, { withFileTypes: true })) {
-		if (entry.isDirectory() || entry.isSymbolicLink()) {
-			const skillFile = join(baseDir, entry.name, "SKILL.md");
+		const fullPath = join(baseDir, entry.name);
+		const isDir = entry.isDirectory() || (entry.isSymbolicLink() && statSync(fullPath, { throwIfNoEntry: false })?.isDirectory());
+
+		if (isDir) {
+			const skillFile = join(fullPath, "SKILL.md");
 			if (existsSync(skillFile)) {
 				const item = parseSkillFile(skillFile, type, toolId);
 				if (item) items.push(item);
 				continue;
 			}
-			const mdFiles = readdirSync(join(baseDir, entry.name)).filter(
+			const mdFiles = readdirSync(fullPath).filter(
 				(f) => f.endsWith(".md") && !IGNORED_FILES.has(f.toLowerCase())
 			);
 			const preferred =
@@ -105,7 +110,7 @@ function scanFlatMd(
 				) || mdFiles[0];
 			if (preferred) {
 				const item = parseSkillFile(
-					join(baseDir, entry.name, preferred),
+					join(fullPath, preferred),
 					type,
 					toolId
 				);
@@ -116,7 +121,7 @@ function scanFlatMd(
 
 		const fname = entry.name.toLowerCase();
 		if (!fname.endsWith(".md") || IGNORED_FILES.has(fname)) continue;
-		const item = parseSkillFile(join(baseDir, entry.name), type, toolId, "flat-md");
+		const item = parseSkillFile(fullPath, type, toolId, "flat-md");
 		if (item) items.push(item);
 	}
 	return items;
