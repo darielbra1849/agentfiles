@@ -223,7 +223,7 @@ export function installSkill(
 			timeout: 120000,
 			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
 			stdio: ["pipe", "pipe", "ignore"],
-			shell: IS_WIN,
+			shell: IS_WIN ? "cmd.exe" : undefined,
 		}).trim();
 		return { success: true, output: out };
 	} catch (e: unknown) {
@@ -297,7 +297,7 @@ export function removeSkill(skillName: string, runner: "auto" | "npx" | "bunx" =
 			timeout: 30000,
 			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
 			stdio: ["pipe", "pipe", "ignore"],
-			shell: IS_WIN,
+			shell: IS_WIN ? "cmd.exe" : undefined,
 		}).trim();
 		cliSuccess = true;
 	} catch (e: unknown) {
@@ -326,7 +326,7 @@ export function updateAllSkills(runner: "auto" | "npx" | "bunx" = "auto"): { suc
 			timeout: 120000,
 			env: { ...process.env, PATH: buildPath(), NO_COLOR: "1" },
 			stdio: ["pipe", "pipe", "ignore"],
-			shell: IS_WIN,
+			shell: IS_WIN ? "cmd.exe" : undefined,
 		}).trim();
 		const match = out.match(/Updated (\d+) skill/);
 		const count = match ? parseInt(match[1]) : 0;

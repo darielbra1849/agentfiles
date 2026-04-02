@@ -93,6 +93,7 @@ export class AgentfilesView extends ItemView {
 
 		this.updateRef = this.store.on("updated", () => this.renderAll());
 		this.renderAll();
+		this.store.revalidate();
 	}
 
 	toggleDashboard(): void {
