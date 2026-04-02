@@ -1,61 +1,97 @@
 import { execSync } from "child_process";
 import { existsSync, readdirSync } from "fs";
-import { join } from "path";
-import { homedir } from "os";
+import { join, delimiter } from "path";
+import { homedir, platform } from "os";
 
 const HOME = homedir();
+const IS_WIN = platform() === "win32";
 const DB_PATH = join(HOME, ".skillkit", "analytics.db");
+const BIN_NAMES = IS_WIN ? ["skillkit.cmd", "skillkit.exe", "skillkit"] : ["skillkit"];
 
 function buildPath(): string {
-	const extra = [
-		"/usr/local/bin",
-		"/opt/homebrew/bin",
-		join(HOME, ".local", "bin"),
-		join(HOME, ".bun", "bin"),
-	];
-	const nvmDir = join(HOME, ".nvm", "versions", "node");
+	const extra: string[] = [];
+	if (IS_WIN) {
+		const appData = process.env.APPDATA || join(HOME, "AppData", "Roaming");
+		extra.push(
+			join(appData, "npm"),
+			join(HOME, ".bun", "bin"),
+			join(HOME, "AppData", "Local", "npm"),
+		);
+	} else {
+		extra.push(
+			"/usr/local/bin",
+			"/opt/homebrew/bin",
+			join(HOME, ".local", "bin"),
+			join(HOME, ".bun", "bin"),
+		);
+	}
+	const nvmDir = IS_WIN
+		? join(HOME, "AppData", "Roaming", "nvm")
+		: join(HOME, ".nvm", "versions", "node");
 	try {
 		for (const d of readdirSync(nvmDir)) {
-			extra.push(join(nvmDir, d, "bin"));
+			extra.push(IS_WIN ? join(nvmDir, d) : join(nvmDir, d, "bin"));
 		}
 	} catch { /* empty */ }
-	const miseDir = join(HOME, ".local", "share", "mise", "installs");
-	for (const runtime of ["node", "bun"]) {
-		try {
-			for (const d of readdirSync(join(miseDir, runtime))) {
-				extra.push(join(miseDir, runtime, d, "bin"));
-			}
-		} catch { /* empty */ }
+	if (!IS_WIN) {
+		const miseDir = join(HOME, ".local", "share", "mise", "installs");
+		for (const runtime of ["node", "bun"]) {
+			try {
+				for (const d of readdirSync(join(miseDir, runtime))) {
+					extra.push(join(miseDir, runtime, d, "bin"));
+				}
+			} catch { /* empty */ }
+		}
 	}
-	return [...extra, process.env.PATH || ""].join(":");
+	return [...extra, process.env.PATH || ""].join(delimiter);
 }
 
 function findSkillkitBin(): string | null {
-	const searchPaths = [
-		"/usr/local/bin/skillkit",
-		"/opt/homebrew/bin/skillkit",
-		join(HOME, ".local", "bin", "skillkit"),
-		join(HOME, ".bun", "bin", "skillkit"),
-		join(HOME, ".local", "share", "mise", "shims", "skillkit"),
-	];
-	for (const p of searchPaths) {
-		if (existsSync(p)) return p;
+	const searchDirs: string[] = [];
+	if (IS_WIN) {
+		const appData = process.env.APPDATA || join(HOME, "AppData", "Roaming");
+		searchDirs.push(
+			join(appData, "npm"),
+			join(HOME, ".bun", "bin"),
+			join(HOME, "AppData", "Local", "npm"),
+		);
+	} else {
+		searchDirs.push(
+			"/usr/local/bin",
+			"/opt/homebrew/bin",
+			join(HOME, ".local", "bin"),
+			join(HOME, ".bun", "bin"),
+			join(HOME, ".local", "share", "mise", "shims"),
+		);
 	}
-	const nvmDir = join(HOME, ".nvm", "versions", "node");
-	try {
-		for (const d of readdirSync(nvmDir)) {
-			const p = join(nvmDir, d, "bin", "skillkit");
+	for (const dir of searchDirs) {
+		for (const bin of BIN_NAMES) {
+			const p = join(dir, bin);
 			if (existsSync(p)) return p;
 		}
-	} catch { /* empty */ }
-	const miseDir = join(HOME, ".local", "share", "mise", "installs");
-	for (const runtime of ["node", "bun"]) {
-		try {
-			for (const d of readdirSync(join(miseDir, runtime))) {
-				const p = join(miseDir, runtime, d, "bin", "skillkit");
+	}
+	const nvmDir = IS_WIN
+		? join(HOME, "AppData", "Roaming", "nvm")
+		: join(HOME, ".nvm", "versions", "node");
+	try {
+		for (const d of readdirSync(nvmDir)) {
+			const binDir = IS_WIN ? join(nvmDir, d) : join(nvmDir, d, "bin");
+			for (const bin of BIN_NAMES) {
+				const p = join(binDir, bin);
 				if (existsSync(p)) return p;
 			}
-		} catch { /* empty */ }
+		}
+	} catch { /* empty */ }
+	if (!IS_WIN) {
+		const miseDir = join(HOME, ".local", "share", "mise", "installs");
+		for (const runtime of ["node", "bun"]) {
+			try {
+				for (const d of readdirSync(join(miseDir, runtime))) {
+					const p = join(miseDir, runtime, d, "bin", "skillkit");
+					if (existsSync(p)) return p;
+				}
+			} catch { /* empty */ }
+		}
 	}
 	return null;
 }

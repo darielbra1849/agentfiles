@@ -1,12 +1,21 @@
-import { homedir } from "os";
+import { homedir, platform } from "os";
 import { existsSync, readdirSync } from "fs";
 import { join } from "path";
 import type { ToolConfig } from "./types";
 
 const HOME = homedir();
-const XDG_CONFIG = process.env.XDG_CONFIG_HOME || join(HOME, ".config");
+const IS_WIN = platform() === "win32";
+const XDG_CONFIG = process.env.XDG_CONFIG_HOME || (IS_WIN ? join(HOME, ".config") : join(HOME, ".config"));
 
 function appExists(name: string): boolean {
+	if (IS_WIN) {
+		const programFiles = process.env.ProgramFiles || "C:\\Program Files";
+		const localAppData = process.env.LOCALAPPDATA || join(HOME, "AppData", "Local");
+		return (
+			existsSync(join(programFiles, name)) ||
+			existsSync(join(localAppData, "Programs", name))
+		);
+	}
 	return (
 		existsSync(`/Applications/${name}.app`) ||
 		existsSync(join(HOME, "Applications", `${name}.app`))
@@ -14,18 +23,36 @@ function appExists(name: string): boolean {
 }
 
 function cliExists(name: string): boolean {
-	const paths = [
-		`/usr/local/bin/${name}`,
-		`/opt/homebrew/bin/${name}`,
-		join(HOME, ".local", "bin", name),
-	];
-	for (const p of paths) {
-		if (existsSync(p)) return true;
+	const names = IS_WIN ? [`${name}.cmd`, `${name}.exe`, name] : [name];
+	const dirs: string[] = [];
+	if (IS_WIN) {
+		const appData = process.env.APPDATA || join(HOME, "AppData", "Roaming");
+		dirs.push(
+			join(appData, "npm"),
+			join(HOME, ".bun", "bin"),
+			join(HOME, "AppData", "Local", "npm"),
+		);
+	} else {
+		dirs.push(
+			"/usr/local/bin",
+			"/opt/homebrew/bin",
+			join(HOME, ".local", "bin"),
+		);
 	}
-	const nvmDir = join(HOME, ".nvm", "versions", "node");
+	for (const dir of dirs) {
+		for (const n of names) {
+			if (existsSync(join(dir, n))) return true;
+		}
+	}
+	const nvmDir = IS_WIN
+		? join(HOME, "AppData", "Roaming", "nvm")
+		: join(HOME, ".nvm", "versions", "node");
 	try {
 		for (const d of readdirSync(nvmDir)) {
-			if (existsSync(join(nvmDir, d, "bin", name))) return true;
+			const binDir = IS_WIN ? join(nvmDir, d) : join(nvmDir, d, "bin");
+			for (const n of names) {
+				if (existsSync(join(binDir, n))) return true;
+			}
 		}
 	} catch { /* empty */ }
 	return false;

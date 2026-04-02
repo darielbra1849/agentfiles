@@ -1,4 +1,4 @@
-import { MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
+import { Component, MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
 import { writeFileSync } from "fs";
 import { shell } from "electron";
 import type { SkillItem, ChopsSettings } from "../types";
@@ -31,6 +31,8 @@ function formatDate(ms: number): string {
 		year: "numeric",
 	});
 }
+
+const renderComponent = new Component();
 
 export class DetailPanel {
 	private containerEl: HTMLElement;
@@ -225,7 +227,7 @@ export class DetailPanel {
 			item.content,
 			previewEl,
 			item.filePath,
-			this
+			renderComponent
 		);
 	}
 
