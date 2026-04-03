@@ -14,13 +14,14 @@ Search **Agentfiles** in Settings > Community plugins.
 
 ### Manual
 
-```bash
-# Option A: Download from GitHub
-# 1. Get main.js, manifest.json, styles.css from the latest release
-# 2. Copy to <vault>/.obsidian/plugins/agentfiles/
-# 3. Enable in Settings > Community plugins
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/Railly/agentfiles/releases/latest)
+2. Create `<vault>/.obsidian/plugins/agentfiles/`
+3. Copy the three files into that folder
+4. Enable in Settings > Community plugins
 
-# Option B: Using skillkit
+### Optional: skillkit analytics
+
+```bash
 npm i -g @crafter/skillkit
 skillkit scan
 ```
