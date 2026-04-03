@@ -74,9 +74,10 @@ function scanDirectoryWithSkillMd(
 	baseDir: string,
 	type: SkillType,
 	toolId: string,
-	namingMode: NamingMode = "auto"
+	namingMode: NamingMode = "auto",
+	depth: number = 0
 ): SkillItem[] {
-	if (!existsSync(baseDir)) return [];
+	if (!existsSync(baseDir) || depth > 3) return [];
 	const items: SkillItem[] = [];
 
 	for (const entry of readdirSync(baseDir, { withFileTypes: true })) {
@@ -84,10 +85,12 @@ function scanDirectoryWithSkillMd(
 		const isDir = entry.isDirectory() || (entry.isSymbolicLink() && statSync(fullPath, { throwIfNoEntry: false })?.isDirectory());
 		if (!isDir) continue;
 		const skillFile = join(fullPath, "SKILL.md");
-		if (!existsSync(skillFile)) continue;
-
-		const item = parseSkillFile(skillFile, type, toolId, "directory-with-skillmd", namingMode);
-		if (item) items.push(item);
+		if (existsSync(skillFile)) {
+			const item = parseSkillFile(skillFile, type, toolId, "directory-with-skillmd", namingMode);
+			if (item) items.push(item);
+		} else {
+			items.push(...scanDirectoryWithSkillMd(fullPath, type, toolId, namingMode, depth + 1));
+		}
 	}
 	return items;
 }

@@ -46,7 +46,21 @@ function buildPath(): string {
 	return [...extra, process.env.PATH || ""].join(delimiter);
 }
 
+function isCrafterSkillkit(binPath: string): boolean {
+	try {
+		const out = execSync(`"${binPath}" help`, {
+			encoding: "utf-8",
+			timeout: 5000,
+			env: { ...process.env, NO_COLOR: "1", PATH: buildPath() },
+			stdio: ["pipe", "pipe", "pipe"],
+			shell: IS_WIN ? "cmd.exe" : undefined,
+		});
+		return out.includes("Analytics for AI agent skills");
+	} catch { return false; }
+}
+
 function findSkillkitBin(): string | null {
+	const candidates: string[] = [];
 	const searchDirs: string[] = [];
 	if (IS_WIN) {
 		const appData = process.env.APPDATA || join(HOME, "AppData", "Roaming");
@@ -67,7 +81,7 @@ function findSkillkitBin(): string | null {
 	for (const dir of searchDirs) {
 		for (const bin of BIN_NAMES) {
 			const p = join(dir, bin);
-			if (existsSync(p)) return p;
+			if (existsSync(p)) candidates.push(p);
 		}
 	}
 	const nvmDir = IS_WIN
@@ -78,7 +92,7 @@ function findSkillkitBin(): string | null {
 			const binDir = IS_WIN ? join(nvmDir, d) : join(nvmDir, d, "bin");
 			for (const bin of BIN_NAMES) {
 				const p = join(binDir, bin);
-				if (existsSync(p)) return p;
+				if (existsSync(p)) candidates.push(p);
 			}
 		}
 	} catch { /* empty */ }
@@ -88,10 +102,13 @@ function findSkillkitBin(): string | null {
 			try {
 				for (const d of readdirSync(join(miseDir, runtime))) {
 					const p = join(miseDir, runtime, d, "bin", "skillkit");
-					if (existsSync(p)) return p;
+					if (existsSync(p)) candidates.push(p);
 				}
 			} catch { /* empty */ }
 		}
+	}
+	for (const c of candidates) {
+		if (isCrafterSkillkit(c)) return c;
 	}
 	return null;
 }
