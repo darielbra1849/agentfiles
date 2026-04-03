@@ -12,7 +12,7 @@ const TECH_TAGS: TagRule[] = [
 	{ tag: "vue", patterns: [/\bvue\b/i, /\.vue\b/, /vuex|pinia/i] },
 	{ tag: "angular", patterns: [/\bangular\b/i, /\.component\.ts/i] },
 	{ tag: "svelte", patterns: [/\bsvelte\b/i, /\.svelte\b/] },
-	{ tag: "typescript", patterns: [/typescript/i, /\.ts\b/, /tsconfig/i] },
+	{ tag: "typescript", patterns: [/typescript/i, /tsconfig/i, /\.tsx\b/] },
 	{ tag: "javascript", patterns: [/javascript/i, /\.js\b/, /\.mjs\b/] },
 	{ tag: "python", patterns: [/\bpython\b/i, /\.py\b/, /\bpip\b/i, /django|flask|fastapi/i] },
 	{ tag: "rust", patterns: [/\brust\b/i, /\.rs\b/, /cargo\.toml/i] },

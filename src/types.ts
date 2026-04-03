@@ -99,7 +99,6 @@ export interface ConversationItem {
 	project: string;
 	projectPath: string;
 	title: string;
-	firstMessage: string;
 	messages: ConversationMessage[];
 	messageCount: number;
 	firstTimestamp: string;

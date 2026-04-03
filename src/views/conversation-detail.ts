@@ -1,11 +1,9 @@
 import { Component, MarkdownRenderer, Notice, setIcon, type App } from "obsidian";
 import { mkdirSync, existsSync, writeFileSync } from "fs";
-import { dirname } from "path";
+import { dirname, resolve } from "path";
 import type { ConversationItem, ConversationMessage } from "../types";
 import type { ConversationStore } from "../conversations/store";
 import { generateNoteContent, generateNotePath } from "../conversations/note-exporter";
-
-const renderComponent = new Component();
 
 function formatTimestamp(ts: string): string {
 	if (!ts) return "";
@@ -26,6 +24,7 @@ export class ConversationDetailPanel {
 	private currentItem: ConversationItem | null = null;
 	private selectedMessages: Set<number> = new Set();
 	private showAllMessages = false;
+	private renderComponent = new Component();
 
 	constructor(
 		containerEl: HTMLElement,
@@ -242,7 +241,7 @@ export class ConversationDetailPanel {
 			? msg.text.slice(0, 2000) + "\n\n*... (truncated)*"
 			: msg.text;
 
-		void MarkdownRenderer.render(this.app, displayText, contentEl, "", renderComponent);
+		void MarkdownRenderer.render(this.app, displayText, contentEl, "", this.renderComponent);
 
 		// Tool calls
 		if (msg.toolCalls && msg.toolCalls.length > 0) {
@@ -261,20 +260,25 @@ export class ConversationDetailPanel {
 	}
 
 	private promptAddTag(item: ConversationItem): void {
-		const input = document.createElement("input");
-		input.type = "text";
-		input.placeholder = "Enter tag...";
-		input.className = "as-conv-tag-input";
-
 		const tagsBar = this.containerEl.querySelector(".as-conv-detail-tags");
 		if (!tagsBar) return;
 
 		const addBtn = tagsBar.querySelector(".as-conv-tag-add");
-		if (addBtn) addBtn.replaceWith(input);
+		if (!addBtn) return;
 
+		const input = createEl("input", {
+			type: "text",
+			placeholder: "Enter tag...",
+			cls: "as-conv-tag-input",
+		});
+
+		addBtn.replaceWith(input);
 		input.focus();
 
+		let submitted = false;
 		const submit = () => {
+			if (submitted) return;
+			submitted = true;
 			const tag = input.value.trim().toLowerCase().replace(/\s+/g, "-");
 			if (tag) {
 				this.store.addCustomTag(item.uuid, tag);
@@ -290,12 +294,15 @@ export class ConversationDetailPanel {
 	}
 
 	private saveToVault(item: ConversationItem): void {
-		const selected = this.selectedMessages.size > 0
-			? Array.from(this.selectedMessages)
-				.sort((a, b) => a - b)
-				.map((i) => item.messages[i])
-				.filter(Boolean)
-			: item.messages.slice(0, 10);
+		if (this.selectedMessages.size === 0) {
+			new Notice("Select messages to export first", 3000);
+			return;
+		}
+
+		const selected = Array.from(this.selectedMessages)
+			.sort((a, b) => a - b)
+			.map((i) => item.messages[i])
+			.filter(Boolean);
 
 		const content = generateNoteContent({
 			selectedMessages: selected,
@@ -303,7 +310,12 @@ export class ConversationDetailPanel {
 			vaultPath: this.vaultPath,
 		});
 
-		const notePath = generateNotePath(item, this.vaultPath);
+		const notePath = resolve(generateNotePath(item, this.vaultPath));
+		if (!notePath.startsWith(resolve(this.vaultPath))) {
+			new Notice("Invalid path — cannot save outside vault", 5000);
+			return;
+		}
+
 		const dir = dirname(notePath);
 
 		try {

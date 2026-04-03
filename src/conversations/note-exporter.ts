@@ -21,6 +21,7 @@ function formatTimestamp(ts: string): string {
 function sanitizeFilename(name: string): string {
 	return name
 		.replace(/[<>:"/\\|?*]/g, "")
+		.replace(/\.{2,}/g, "")
 		.replace(/\s+/g, "-")
 		.slice(0, 80);
 }

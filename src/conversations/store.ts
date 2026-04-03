@@ -4,7 +4,7 @@ import { join } from "path";
 import { homedir } from "os";
 import type { ConversationItem, ConversationFilter, ConversationTagData } from "../types";
 import { DEFAULT_CONVERSATION_TAG_DATA } from "../types";
-import { parseAllConversations } from "./parser";
+import { parseAllConversationsAsync } from "./parser";
 import { tagAllConversations } from "./tagger";
 
 const TAG_FILE = join(homedir(), ".claude", "agentfiles-conversations.json");
@@ -13,6 +13,7 @@ export class ConversationStore extends Events {
 	private items: ConversationItem[] = [];
 	private _filter: ConversationFilter = { kind: "all-conversations" };
 	private _searchQuery = "";
+	private _loading = false;
 	private tagData: ConversationTagData = { ...DEFAULT_CONVERSATION_TAG_DATA };
 
 	get filter(): ConversationFilter {
@@ -21,6 +22,10 @@ export class ConversationStore extends Events {
 
 	get searchQuery(): string {
 		return this._searchQuery;
+	}
+
+	get loading(): boolean {
+		return this._loading;
 	}
 
 	get allItems(): ConversationItem[] {
@@ -51,7 +56,8 @@ export class ConversationStore extends Events {
 					c.title.toLowerCase().includes(q) ||
 					c.project.toLowerCase().includes(q) ||
 					c.tags.some((t) => t.includes(q)) ||
-					c.customTags.some((t) => t.includes(q))
+					c.customTags.some((t) => t.includes(q)) ||
+					c.messages.some((m) => m.text.toLowerCase().includes(q))
 			);
 		}
 
@@ -77,10 +83,17 @@ export class ConversationStore extends Events {
 	}
 
 	refresh(): void {
+		this._loading = true;
+		this.trigger("conversations-updated");
+		void this.refreshAsync();
+	}
+
+	private async refreshAsync(): Promise<void> {
 		this.loadTagData();
-		this.items = parseAllConversations();
+		this.items = await parseAllConversationsAsync();
 		tagAllConversations(this.items);
 		this.applyTagData();
+		this._loading = false;
 		this.trigger("conversations-updated");
 	}
 
@@ -97,9 +110,7 @@ export class ConversationStore extends Events {
 	private saveTagData(): void {
 		try {
 			writeFileSync(TAG_FILE, JSON.stringify(this.tagData, null, 2), "utf-8");
-		} catch {
-			/* silent */
-		}
+		} catch { /* silent */ }
 	}
 
 	private applyTagData(): void {

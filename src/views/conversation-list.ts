@@ -72,6 +72,14 @@ export class ConversationListPanel {
 		if (!this.listEl) return;
 		this.listEl.empty();
 
+		if (this.store.loading) {
+			this.listEl.createDiv({
+				cls: "as-list-empty",
+				text: "Loading conversations...",
+			});
+			return;
+		}
+
 		const items = this.store.filteredItems;
 
 		if (items.length === 0) {
