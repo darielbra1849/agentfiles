@@ -2,7 +2,7 @@ import { Events } from "obsidian";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
-import type { ConversationItem, ConversationFilter, ConversationTagData } from "../types";
+import type { ConversationItem, ConversationFilter, ConversationSort, ConversationDateRange, ConversationTagData } from "../types";
 import { DEFAULT_CONVERSATION_TAG_DATA } from "../types";
 import { parseAllConversationsAsync } from "./parser";
 import { tagAllConversations } from "./tagger";
@@ -12,12 +12,27 @@ const TAG_FILE = join(homedir(), ".claude", "agentfiles-conversations.json");
 export class ConversationStore extends Events {
 	private items: ConversationItem[] = [];
 	private _filter: ConversationFilter = { kind: "all-conversations" };
+	private _sort: ConversationSort = "date";
+	private _dateRange: ConversationDateRange = "today";
+	private _activeTags: string[] = [];
 	private _searchQuery = "";
 	private _loading = false;
 	private tagData: ConversationTagData = { ...DEFAULT_CONVERSATION_TAG_DATA };
 
 	get filter(): ConversationFilter {
 		return this._filter;
+	}
+
+	get sort(): ConversationSort {
+		return this._sort;
+	}
+
+	get dateRange(): ConversationDateRange {
+		return this._dateRange;
+	}
+
+	get activeTags(): string[] {
+		return this._activeTags;
 	}
 
 	get searchQuery(): string {
@@ -49,6 +64,20 @@ export class ConversationStore extends Events {
 				break;
 		}
 
+		if (this._dateRange !== "all") {
+			const now = Date.now();
+			const days = { today: 1, "7d": 7, "30d": 30, "90d": 90, "180d": 180 }[this._dateRange];
+			const cutoff = now - days * 86400000;
+			result = result.filter((c) => new Date(c.lastTimestamp).getTime() >= cutoff);
+		}
+
+		if (this._activeTags.length > 0) {
+			result = result.filter((c) => {
+				const allTags = [...c.tags, ...c.customTags];
+				return this._activeTags.every((t) => allTags.includes(t));
+			});
+		}
+
 		if (this._searchQuery) {
 			const q = this._searchQuery.toLowerCase();
 			result = result.filter(
@@ -59,6 +88,10 @@ export class ConversationStore extends Events {
 					c.customTags.some((t) => t.includes(q)) ||
 					c.messages.some((m) => m.text.toLowerCase().includes(q))
 			);
+		}
+
+		if (this._sort === "messages") {
+			result = [...result].sort((a, b) => b.messageCount - a.messageCount);
 		}
 
 		return result;
@@ -122,6 +155,31 @@ export class ConversationStore extends Events {
 
 	setFilter(filter: ConversationFilter): void {
 		this._filter = filter;
+		this.trigger("conversations-updated");
+	}
+
+	setSort(sort: ConversationSort): void {
+		this._sort = sort;
+		this.trigger("conversations-updated");
+	}
+
+	setDateRange(range: ConversationDateRange): void {
+		this._dateRange = range;
+		this.trigger("conversations-updated");
+	}
+
+	toggleTag(tag: string): void {
+		const idx = this._activeTags.indexOf(tag);
+		if (idx >= 0) {
+			this._activeTags.splice(idx, 1);
+		} else {
+			this._activeTags.push(tag);
+		}
+		this.trigger("conversations-updated");
+	}
+
+	clearTags(): void {
+		this._activeTags = [];
 		this.trigger("conversations-updated");
 	}
 

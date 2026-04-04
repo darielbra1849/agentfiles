@@ -1,6 +1,6 @@
 import { setIcon } from "obsidian";
 import type { ConversationStore } from "../conversations/store";
-import type { ConversationItem } from "../types";
+import type { ConversationItem, ConversationSort, ConversationDateRange } from "../types";
 
 function sanitizeTitle(raw: string): string {
 	return raw
@@ -38,6 +38,7 @@ export class ConversationListPanel {
 	private onSelect: (item: ConversationItem) => void;
 	private selectedUuid: string | null = null;
 	private inputEl: HTMLInputElement | null = null;
+	private toolbarEl: HTMLElement | null = null;
 	private listEl: HTMLElement | null = null;
 
 	constructor(
@@ -59,8 +60,8 @@ export class ConversationListPanel {
 			this.containerEl.empty();
 			this.containerEl.addClass("as-list");
 
-			const searchContainer = this.containerEl.createDiv("as-search");
-			this.inputEl = searchContainer.createEl("input", {
+			this.searchRowEl = this.containerEl.createDiv("as-search");
+			this.inputEl = this.searchRowEl.createEl("input", {
 				type: "text",
 				placeholder: "Search conversations...",
 				cls: "as-search-input",
@@ -69,11 +70,172 @@ export class ConversationListPanel {
 				this.store.setSearch(this.inputEl!.value);
 			});
 
+			this.toolbarEl = this.containerEl.createDiv("as-conv-toolbar");
 			this.listEl = this.containerEl.createDiv("as-list-items as-conv-list");
 		}
 
 		this.inputEl.value = this.store.searchQuery;
+		this.renderSearchActions();
+		this.renderTagStrip();
 		this.renderList();
+	}
+
+	private searchRowEl: HTMLElement | null = null;
+	private searchActionsEl: HTMLElement | null = null;
+	private outsideClickCleanup: (() => void) | null = null;
+	private dateDropdownEl: HTMLElement | null = null;
+	private tagDropdownEl: HTMLElement | null = null;
+	private openDropdown: "date" | "tag" | null = null;
+
+	private closeAllDropdowns(): void {
+		this.openDropdown = null;
+		this.dateDropdownEl?.removeClass("is-open");
+		this.tagDropdownEl?.removeClass("is-open");
+		if (this.outsideClickCleanup) {
+			this.outsideClickCleanup();
+			this.outsideClickCleanup = null;
+		}
+	}
+
+	private toggleDropdown(which: "date" | "tag", wrapper: HTMLElement): void {
+		if (this.openDropdown === which) {
+			this.closeAllDropdowns();
+			return;
+		}
+		this.closeAllDropdowns();
+		this.openDropdown = which;
+		const dd = which === "date" ? this.dateDropdownEl : this.tagDropdownEl;
+		dd?.addClass("is-open");
+
+		const close = (ev: MouseEvent) => {
+			if (!wrapper.contains(ev.target as Node)) {
+				this.closeAllDropdowns();
+			}
+		};
+		setTimeout(() => document.addEventListener("click", close), 0);
+		this.outsideClickCleanup = () => document.removeEventListener("click", close);
+	}
+
+	private renderSearchActions(): void {
+		if (!this.searchRowEl) return;
+		if (this.searchActionsEl) this.searchActionsEl.remove();
+		this.searchActionsEl = this.searchRowEl.createDiv("as-conv-search-actions");
+
+		const dateWrapper = this.searchActionsEl.createDiv("as-conv-dropdown-wrap");
+		const dateBtn = dateWrapper.createEl("button", { cls: "as-conv-icon-btn" });
+		const dateIco = dateBtn.createSpan("as-conv-icon-btn-icon");
+		setIcon(dateIco, "calendar");
+
+		this.dateDropdownEl = dateWrapper.createDiv("as-conv-dropdown");
+		if (this.openDropdown === "date") this.dateDropdownEl.addClass("is-open");
+
+		const ranges: { label: string; value: ConversationDateRange }[] = [
+			{ label: "Today", value: "today" },
+			{ label: "Last 7 days", value: "7d" },
+			{ label: "Last 30 days", value: "30d" },
+			{ label: "Last 90 days", value: "90d" },
+			{ label: "Last 6 months", value: "180d" },
+			{ label: "All time", value: "all" },
+		];
+		for (const r of ranges) {
+			const isActive = this.store.dateRange === r.value;
+			const item = this.dateDropdownEl.createDiv(`as-conv-dropdown-item ${isActive ? "is-active" : ""}`);
+			const check = item.createSpan("as-conv-dropdown-check");
+			if (isActive) setIcon(check, "check");
+			item.createSpan({ cls: "as-conv-dropdown-item-label", text: r.label });
+			item.addEventListener("click", (e) => {
+				e.stopPropagation();
+				this.store.setDateRange(r.value);
+				this.closeAllDropdowns();
+			});
+		}
+
+		dateBtn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			this.toggleDropdown("date", dateWrapper);
+		});
+
+		const allTags = this.store.getAllTags();
+		const activeTags = this.store.activeTags;
+		const hasTags = allTags.size > 0;
+
+		const tagWrapper = this.searchActionsEl.createDiv("as-conv-dropdown-wrap");
+		const tagBtn = tagWrapper.createEl("button", { cls: "as-conv-icon-btn" });
+		if (!hasTags) tagBtn.addClass("is-disabled");
+		if (activeTags.length > 0) tagBtn.addClass("has-active");
+		const tagIco = tagBtn.createSpan("as-conv-icon-btn-icon");
+		setIcon(tagIco, "tag");
+
+		this.tagDropdownEl = tagWrapper.createDiv("as-conv-dropdown");
+		if (this.openDropdown === "tag") this.tagDropdownEl.addClass("is-open");
+
+		if (hasTags) {
+			if (activeTags.length > 0) {
+				const clearRow = this.tagDropdownEl.createDiv("as-conv-dropdown-item as-conv-dropdown-clear");
+				const clearIco = clearRow.createSpan("as-conv-dropdown-item-icon");
+				setIcon(clearIco, "x");
+				clearRow.createSpan({ text: "Clear filters" });
+				clearRow.addEventListener("click", (e) => {
+					e.stopPropagation();
+					this.store.clearTags();
+				});
+			}
+
+			const sorted = Array.from(allTags.entries()).sort((a, b) => b[1] - a[1]).slice(0, 25);
+			for (const [tag, count] of sorted) {
+				const isActive = activeTags.includes(tag);
+				const item = this.tagDropdownEl.createDiv(`as-conv-dropdown-item ${isActive ? "is-active" : ""}`);
+				const check = item.createSpan("as-conv-dropdown-check");
+				if (isActive) setIcon(check, "check");
+				item.createSpan({ cls: "as-conv-dropdown-item-label", text: tag });
+				item.createSpan({ cls: "as-conv-dropdown-item-count", text: String(count) });
+				item.addEventListener("click", (e) => {
+					e.stopPropagation();
+					this.store.toggleTag(tag);
+				});
+			}
+		}
+
+		tagBtn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			if (!hasTags) return;
+			this.toggleDropdown("tag", tagWrapper);
+		});
+
+		const nextSort: ConversationSort = this.store.sort === "date" ? "messages" : "date";
+		const sortBtn = this.searchActionsEl.createEl("button", { cls: "as-conv-icon-btn" });
+		const sortIco = sortBtn.createSpan("as-conv-icon-btn-icon");
+		setIcon(sortIco, this.store.sort === "date" ? "clock" : "hash");
+		sortBtn.setAttribute("aria-label", `Sort by ${nextSort}`);
+		sortBtn.addEventListener("click", () => this.store.setSort(nextSort));
+	}
+
+	private renderTagStrip(): void {
+		if (!this.toolbarEl) return;
+		this.toolbarEl.empty();
+
+		const activeTags = this.store.activeTags;
+		const count = this.store.filteredItems.length;
+
+		if (activeTags.length === 0 && count === this.store.allItems.length) return;
+
+		const strip = this.toolbarEl.createDiv("as-conv-tag-strip");
+
+		strip.createSpan({ cls: "as-conv-result-count", text: `${count} results` });
+
+		for (const tag of activeTags) {
+			const pill = strip.createEl("button", { cls: "as-conv-tag-pill is-active" });
+			pill.createSpan({ text: tag });
+			const x = pill.createSpan("as-conv-tag-pill-x");
+			setIcon(x, "x");
+			pill.addEventListener("click", () => this.store.toggleTag(tag));
+		}
+
+		if (activeTags.length > 0) {
+			const clearBtn = strip.createEl("button", { cls: "as-conv-tag-pill as-conv-tag-clear" });
+			clearBtn.createSpan({ text: "Clear all" });
+			clearBtn.addEventListener("click", () => this.store.clearTags());
+		}
 	}
 
 	private renderList(): void {

@@ -340,28 +340,6 @@ export class SidebarPanel {
 			}
 		}
 
-		// Tags
-		const tagCounts = this.conversationStore.getAllTags();
-		if (tagCounts.size > 0) {
-			const section = this.containerEl.createDiv("as-sidebar-section");
-			section.createDiv({ cls: "as-sidebar-title", text: "Tags" });
-
-			const convFilter = this.conversationStore.filter;
-			const sorted = Array.from(tagCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 20);
-			for (const [tag, count] of sorted) {
-				const row = section.createDiv("as-sidebar-item");
-				if (convFilter.kind === "conversation-tag" && convFilter.tag === tag) {
-					row.addClass("is-active");
-				}
-				const icon = row.createSpan("as-sidebar-icon");
-				setIcon(icon, "tag");
-				row.createSpan({ cls: "as-sidebar-label", text: tag });
-				row.createSpan({ cls: "as-sidebar-count", text: String(count) });
-				row.addEventListener("click", () => {
-					this.conversationStore!.setFilter({ kind: "conversation-tag", tag });
-				});
-			}
-		}
 	}
 
 	private isActive(filter: SidebarFilter): boolean {

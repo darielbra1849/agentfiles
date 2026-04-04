@@ -109,6 +109,9 @@ export interface ConversationItem {
 	filePath: string;
 }
 
+export type ConversationSort = "date" | "messages";
+export type ConversationDateRange = "all" | "today" | "7d" | "30d" | "90d" | "180d";
+
 export type ConversationFilter =
 	| { kind: "all-conversations" }
 	| { kind: "conversation-project"; project: string }
