@@ -2,6 +2,21 @@ import Link from "next/link";
 import { Footer } from "@/components/footer";
 import { Nav } from "@/components/nav";
 
+async function getStarCount(): Promise<number> {
+	const res = await fetch(
+		"https://api.github.com/repos/Railly/agentfiles",
+		{ next: { revalidate: 3600 } },
+	);
+	if (!res.ok) return 428;
+	const data = await res.json();
+	return data.stargazers_count ?? 428;
+}
+
+async function StarCount() {
+	const count = await getStarCount();
+	return <>{count}</>;
+}
+
 const features = [
 	{
 		title: "Skill Scanner",
@@ -79,14 +94,14 @@ function HeroSection() {
 						v0.7.0 &mdash; CodeMirror 6 Editor
 					</div>
 					<h1 className="text-4xl sm:text-6xl font-bold tracking-tight leading-[1.05]">
-						Your AI skills,
+						One plugin for all your
 						<br />
-						<span className="text-[var(--accent)]">organized</span>.
+						<span className="text-[var(--accent)]">agent files</span>.
 					</h1>
 					<p className="text-lg text-[var(--muted)] max-w-xl leading-relaxed">
-						Browse, create, and manage AI agent skills across Claude Code,
-						Cursor, Codex, Windsurf, and 10+ coding agents &mdash; all inside
-						Obsidian.
+						Browse, create, and edit skills, commands, and agents across Claude
+						Code, Cursor, Codex, Windsurf, and 13+ AI coding tools &mdash; from
+						a single Obsidian panel.
 					</p>
 					<div className="flex items-center gap-3 flex-wrap pt-2">
 						<a
@@ -102,7 +117,7 @@ function HeroSection() {
 							className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--muted)] hover:text-[var(--foreground)] hover:border-zinc-500 transition-colors"
 						>
 							<StarIcon />
-							428 stars
+							<StarCount /> stars
 						</a>
 						<Link
 							href="/docs"

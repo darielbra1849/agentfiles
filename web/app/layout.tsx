@@ -4,22 +4,22 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-	title: "Agentfiles — AI Skills Manager for Obsidian",
+	title: "Agentfiles — One plugin for all your agent files",
 	description:
-		"Browse, create, and manage AI agent skills across Claude Code, Cursor, Codex, Windsurf, and 10+ coding agents — all inside Obsidian.",
+		"Browse, create, and edit skills, commands, and agents across Claude Code, Cursor, Codex, Windsurf, and 13+ AI coding tools — from a single Obsidian panel.",
 	openGraph: {
-		title: "Agentfiles",
+		title: "Agentfiles — One plugin for all your agent files",
 		description:
-			"Browse, create, and manage AI agent skills across Claude Code, Cursor, Codex, Windsurf, and 10+ coding agents.",
-		url: "https://agentfiles.dev",
+			"Browse, create, and edit skills, commands, and agents across Claude Code, Cursor, Codex, Windsurf, and 13+ AI coding tools — from a single Obsidian panel.",
+		url: "https://agentfiles.crafter.run",
 		siteName: "Agentfiles",
 		type: "website",
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "Agentfiles",
+		title: "Agentfiles — One plugin for all your agent files",
 		description:
-			"Browse, create, and manage AI agent skills across Claude Code, Cursor, Codex, Windsurf, and 10+ coding agents.",
+			"Browse, create, and edit skills, commands, and agents across Claude Code, Cursor, Codex, Windsurf, and 13+ AI coding tools — from a single Obsidian panel.",
 	},
 };
 
