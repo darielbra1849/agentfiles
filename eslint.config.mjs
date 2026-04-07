@@ -36,10 +36,10 @@ export default defineConfig([
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-call": "off",
 			"@typescript-eslint/no-unsafe-return": "off",
-			"@typescript-eslint/no-base-to-string": "off",
+			"@typescript-eslint/no-base-to-string": "error",
 		},
 	},
 	{
-		ignores: ["main.js", "node_modules/**", "*.mjs"],
+		ignores: ["main.js", "node_modules/**", "*.mjs", "web/**"],
 	},
 ]);
